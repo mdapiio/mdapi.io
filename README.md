@@ -1206,8 +1206,9 @@ Response:
 
 ## External Links
 
-- **skills.sh** https://www.skills.sh/mdapiio/mdapi.io
 - **github.com** https://github.com/mdapiio/mdapi.io
+- **skills.sh** https://www.skills.sh/mdapiio/mdapi.io
+- **clawhub.ai** https://clawhub.ai/mdapiio
 
 ## Disclaimer
 
