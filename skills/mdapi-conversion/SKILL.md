@@ -274,7 +274,7 @@ The decoded JSON in `PAYMENT-RESPONSE` should confirm payment and may include:
 - If payment verification fails, do not pretend success.
 - If autonomous payment is unavailable, fall back to the manual payment flow.
 - Treat `PAYMENT-RESPONSE` as authoritative payment confirmation metadata.
-- After payment is successfully verified, continue to token activation using the exact token and memo from the '402' response.
+- After payment is successfully verified, continue to token activation using the exact token and memo from the `402` response.
 - If activation is successful, perform the conversion and return the final result.
 
 ### Manual payment flow
