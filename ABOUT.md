@@ -79,6 +79,46 @@ mdapi.io supports both autonomous and human-assisted payment flows.
 - Shared swarm budgets can be used for coordinated execution.
 - Human users can complete payment manually through QR-based flows when needed.
 
+## Usage scenarios
+
+mdapi.io is a minimal, self-documenting service-transport primitive. Because every protocol converges on the same transformation core, agents can combine them freely - passing already-processed knowledge between each other.
+
+### Agent swarms and parallel processing
+
+Each request is handled by a stateless, automatically-scaled execution environment, so the service scales horizontally - the more agents that call it, the more it parallelizes. An orchestrator can fan work out across a swarm of agents, and the swarm processes very large batches of distinct resources in parallel. Because every protocol converges on the same core, agents can cooperate directly and hand compact intermediate results to one another.
+
+In practice this means millions of resources can be processed in a matter of minutes, not hours - the practical ceiling is set by how widely the orchestrator distributes the work, not by the service itself. Different users may freely access the same resource; each user simply stays within their own fair-use allowance.
+
+### Shared vs individual payment
+
+- **Shared token** - the orchestrator pays once, activates a token for the needed volume, and hands it to the whole swarm. This batches on-chain activity and reduces blockchain load.
+- **Individual tokens** - each agent pays for its own work, activating exactly the volume it received (e.g. 166 resources → pay for 166 upfront).
+- If a wallet is missing or underfunded, the agent drops into **human-in-the-loop** mode: it returns payment details and a QR code, the human pays from a mobile device, and the agent resumes automatically on confirmation.
+
+### Role switching and multi-agent / human collaboration
+
+An agent's role can change mid-task. One agent may fetch and normalize a webpage, then hand the compact Markdown to another agent (via the text or prompt parameters) that summarizes or extracts. The same flow works between agent and human: an IDE agent indexes scattered project documentation in mixed formats and surfaces sourced snippets; a research agent prepares RAG-ready input; a coordinator delegates and reassembles results.
+
+### Cross-protocol interoperability
+
+Because REST, MCP, ACP, A2A, and OpenAI-compatible endpoints all call the same core, different agent types can cooperate directly. Knowledge extracted on one protocol can be relayed on another - the transport is interchangeable, the result is the same.
+
+### Bulk processing and model training
+
+For any task that needs maximum resources processed in minimum time (LLM training corpora, large-scale RAG indexing, bulk document normalization), the swarm pattern turns mdapi.io into a high-throughput edge pipeline.
+
+### Edge filter in front of expensive models
+
+The core job of mdapi.io is to remove weight before it reaches reasoning. Instead of sending a raw PDF, webpage, or scanned document straight into an LLM, an agent routes it through mdapi.io first and forwards only the compact result. That keeps context windows small, cuts token spend, and avoids wasting compute on navigation, boilerplate, and layout the model never needed. The service is the heavy-lifting layer; the model gets just the part it must reason about.
+
+### Prompt as a command between agents
+
+The `prompt` parameter is not only instructions for the service - it is also how one agent directs another. An agent can hand a processed resource to a peer together with a prompt like "extract only the price tables" or "return this as JSON", and the receiving agent lets mdapi.io execute that instruction. The service becomes the shared execution engine for the swarm's intent, not just a converter.
+
+### Legacy to AI-ready bridge
+
+Many real systems still speak in scans, spreadsheets, and old document formats. mdapi.io normalizes that mixed, legacy input into clean AI-ready Markdown or structured data on the fly, so agents can treat a decades-old report the same way they treat a modern webpage. It is the translation layer that lets older infrastructure participate in an agentic workflow without refactoring.
+
 ## What you get back
 
 Depending on how you call the service, mdapi.io can return:
