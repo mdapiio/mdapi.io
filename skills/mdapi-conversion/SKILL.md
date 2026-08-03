@@ -317,8 +317,8 @@ When payment is required, the service may provide the following headers:
 #### Manual payment workflow
 - Read the payment headers from the response.
 - If `X-QR-Payment` is present, treat it as the canonical payment payload.
-- If the client UI can render QR codes, display the QR payload directly as a QR code.
-- If the client UI cannot render QR codes, present the QR payload to the user and instruct them to scan it with a mobile wallet or paste it into any QR generator.
+- Generate a QR code using the service endpoint: `GET /qr?data=<X-QR-Payment value>` — this returns an SVG image. Never use external online QR generators — they can harvest payment data.
+- If the client UI can render QR codes natively, display the QR payload directly.
 - If `X-QR-Payment` is not present, fall back to the returned token, memo, and wallet address exactly as provided by the service.
 - Ask the user to complete the payment externally.
 - After payment is completed, instruct the user to reply with the exact word: `Continue`.
@@ -670,7 +670,7 @@ curl -X POST -F "file=@document.pdf" "https://mdapi.io/"
 
 ### Paid request with token activation
 ```bash
-curl "https://mdapi.io/?url=https://example.com/doc.pdf&token=YOUR_TOKEN&memo=YOUR_MEMO"
+curl -H "Authorization: Bearer YOUR_TOKEN" -H "X-Memo-Required: YOUR_MEMO" "https://mdapi.io/?url=https://example.com/doc.pdf"
 ```
 
 ### OpenAI-compatible request
