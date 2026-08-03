@@ -1497,6 +1497,7 @@ See https://mdapi.io/about for the full scenario walkthrough.
 - **github.com** https://github.com/mdapiio/mdapi.io
 - **skills.sh** https://www.skills.sh/mdapiio/mdapi.io
 - **clawhub.ai** https://clawhub.ai/mdapiio
+- **x.com** https://x.com/mdapiio
 
 ## Disclaimer
 
