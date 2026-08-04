@@ -48,9 +48,9 @@ GET /.well-known/ai-discovery.json
 
 Every protocol (REST, MCP, ACP, A2A, OpenAI) converges on the **same conversion core**, so content is specified via a single unified `input` parameter everywhere.
 
-| Parameter | Type   | Description                                                                                                                         |
-| --------- | ------ | ----------------------------------------------------------------------------------------------------------------------------------- |
-| `input`   | string | Content to convert. Auto-detected: starts with `http://`/`https://` → URL, starts with `data:` → file (data URI), otherwise → text. |
+| Parameter | Type   | Description                                                                                                                 |
+| --------- | ------ | --------------------------------------------------------------------------------------------------------------------------- |
+| `input`   | string | Content to convert. Auto-detected: starts with `http(s)://` → URL, starts with `data:` → file (data URI), otherwise → text. |
 
 The `input` parameter is auto-detected by the core: URLs (starting with `http://` or `https://`) are fetched, data URIs (starting with `data:`) are decoded as files, and anything else is treated as raw text. Additional parameters (`prompt`, `result`, `stream`, `token`, `memo`) are orthogonal and may be combined with `input`.
 
@@ -180,8 +180,8 @@ data: [DONE]
 
 | Protocol | Streaming frame format                                                                                                            |
 | -------- | --------------------------------------------------------------------------------------------------------------------------------- |
-| REST     | OpenAI-compatible `choices`/`delta` frames                                                                                        |
-| OpenAI   | `chat.completion.chunk` (`choices`/`delta`)                                                                                       |
+| REST     | OpenAI-compatible `choices/delta` frames                                                                                          |
+| OpenAI   | `chat.completion.chunk` (`choices/delta`)                                                                                         |
 | MCP      | `notifications/message` content chunks, then one final `tools/call` result frame                                                  |
 | ACP      | incremental JSON-RPC `result.content` text chunks, then a final full `result` frame                                               |
 | A2A      | incremental `task.artifacts[].parts[].text` chunks (`TASK_STATE_WORKING`), then a final completed `task` (`TASK_STATE_COMPLETED`) |
@@ -498,11 +498,8 @@ Response (SSE over `streamable-http`): intermediate `notifications/message` cont
 
 ```
 data: {"jsonrpc":"2.0","method":"notifications/message","params":{"level":"info","data":" partial "}}
-
 data: {"jsonrpc":"2.0","method":"notifications/message","params":{"level":"info","data":" more "}}
-
 data: {"jsonrpc":"2.0","id":3,"result":{"content":[{"type":"text","text":"<full converted content>"}],"isError":false}}
-
 data: [DONE]
 ```
 
@@ -1295,11 +1292,8 @@ Response format (real content stream; intermediate `working` chunks, then the fi
 
 ```
 data: {"jsonrpc":"2.0","id":5,"result":{"task":{"id":"task_...","contextId":"ctx_...","status":{"state":"working"},"artifacts":[{"artifactId":"artifact_...","name":"conversion_result","parts":[{"text":" partial "}]}]}}}
-
 data: {"jsonrpc":"2.0","id":5,"result":{"task":{"id":"task_...","contextId":"ctx_...","status":{"state":"working"},"artifacts":[{"artifactId":"artifact_...","name":"conversion_result","parts":[{"text":" more "}]}]}}}
-
 data: {"jsonrpc":"2.0","id":5,"result":{"task":{"id":"task_...","contextId":"ctx_...","status":{"state":"completed"},"artifacts":[{"artifactId":"artifact_...","name":"conversion_result","parts":[{"text":"<full converted content>"}]}]}}}
-
 data: [DONE]
 ```
 
@@ -1497,11 +1491,8 @@ ACP returns a JSON-RPC 2.0 result with a `content` array. The `convert` tool map
 
 ```
 data: {"jsonrpc":"2.0","id":3,"result":{"content":[{"type":"text","text":" partial "}],"isError":false}}
-
 data: {"jsonrpc":"2.0","id":3,"result":{"content":[{"type":"text","text":" more "}],"isError":false}}
-
 data: {"jsonrpc":"2.0","id":3,"result":{"content":[{"type":"text","text":"<full converted content>"}],"isError":false}}
-
 data: [DONE]
 ```
 
