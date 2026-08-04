@@ -14,13 +14,13 @@ Transforms documents, images, and webpages into AI-ready Markdown and structured
 
 Choose your entry point based on your role:
 
-| Role                                                  | Protocol                     | Endpoint                  | When to use                                                                                               |
-| ----------------------------------------------------- | ---------------------------- | ------------------------- | --------------------------------------------------------------------------------------------------------- |
-| IDE / coding agent (JetBrains, Cursor, VS Code, etc.) | ACP (Agent Client Protocol)  | POST /acp                 | You are an IDE plugin or coding agent. Use tools/call with convert tool.                                  |
-| AI agent (Claude Code, Codex, OpenClaw, Hermes, etc.) | A2A (Agent-to-Agent)         | POST /a2a                 | You are an autonomous agent. Use message/send with text/file parts. Supports streaming and task tracking. |
-| AI agent (any framework)                              | MCP (Model Context Protocol) | GET  /mcp + POST /mcp     | You need tool discovery. Use tools/call with convert tool.                                                |
-| OpenAI-compatible client                              | OpenAI API                   | POST /v1/chat/completions | You already use OpenAI SDK. Pass URL/file in messages. Supports streaming.                                |
-| Direct HTTP / curl / script                           | REST API                     | GET  / or POST /          | Simplest path. GET returns Markdown directly. POST returns JSON with metadata.                            |
+| Role                                                  | Protocol                     | Endpoint                  | When to use                                                                                                  |
+| ----------------------------------------------------- | ---------------------------- | ------------------------- | ------------------------------------------------------------------------------------------------------------ |
+| IDE / coding agent (JetBrains, Cursor, VS Code, etc.) | ACP (Agent Client Protocol)  | POST /acp                 | You are an IDE plugin or coding agent. Use tools/call with convert tool.                                     |
+| AI agent (Claude Code, Codex, OpenClaw, Hermes, etc.) | A2A (Agent-to-Agent)         | POST /a2a                 | You are an autonomous agent. Use message/send with data in text parts. Supports streaming and task tracking. |
+| AI agent (any framework)                              | MCP (Model Context Protocol) | GET  /mcp + POST /mcp     | You need tool discovery. Use tools/call with convert tool.                                                   |
+| OpenAI-compatible client                              | OpenAI API                   | POST /v1/chat/completions | You already use OpenAI SDK. Pass URL/file in messages. Supports streaming.                                   |
+| Direct HTTP / curl / script                           | REST API                     | GET  / or POST /          | Simplest path. GET returns Markdown directly. POST returns JSON with metadata.                               |
 
 ### Universal discovery
 
@@ -46,21 +46,15 @@ GET /.well-known/ai-discovery.json
 
 ## Source Parameters (all protocols)
 
-Every protocol (REST, MCP, ACP, A2A, OpenAI) converges on the **same conversion core**, so the source of content is specified identically everywhere.
+Every protocol (REST, MCP, ACP, A2A, OpenAI) converges on the **same conversion core**, so content is specified via a single unified `input` parameter everywhere.
 
-Provide **exactly one** source parameter per request - the core accepts only one at a time:
+| Parameter | Type   | Description                                                                                                                         |
+| --------- | ------ | ----------------------------------------------------------------------------------------------------------------------------------- |
+| `input`   | string | Content to convert. Auto-detected: starts with `http://`/`https://` → URL, starts with `data:` → file (data URI), otherwise → text. |
 
-| Parameter | Type   | Description                                                          |
-| --------- | ------ | -------------------------------------------------------------------- |
-| `url`     | string | A publicly accessible URL (webpage, document, image, file).          |
-| `text`    | string | Raw text content to process (HTML, XML, JSON, CSV, TXT, ...).        |
-| `file`    | file   | Uploaded file (multipart) or base64/data-URL, depending on protocol. |
+The `input` parameter is auto-detected by the core: URLs (starting with `http://` or `https://`) are fetched, data URIs (starting with `data:`) are decoded as files, and anything else is treated as raw text. Additional parameters (`prompt`, `result`, `stream`, `token`, `memo`) are orthogonal and may be combined with `input`.
 
-> **One source per request:** `url` **XOR** `text` **XOR** `file`. If more than one is supplied, the core uses a single deterministic source (url preferred,
-> then text, then file) - but callers should send exactly one. Additional parameters (`prompt`, `result`, `stream`, `token`, `memo`) are orthogonal and
-> may be combined with any single source.
-
-All five protocols expose the same `url` / `text` / `file` sources and apply the same transformations, streaming, and prompt-driven processing - the only
+All five protocols expose the same `input` source and apply the same transformations, streaming, and prompt-driven processing - the only
 difference is the transport (REST query/JSON, MCP `tools/call`, ACP RPC, OpenAI `messages`, A2A `message.parts`).
 
 ## Limits
@@ -99,42 +93,39 @@ Important: The token+memo issued in the 402 response MUST be used exactly. Using
 
 ## API Usage
 
-### GET / (URL and text conversion)
+### GET / (Content conversion)
 
-Simple URL or text conversion using query parameters. Returns Markdown directly.
-
-#### Parameters
-
-| Parameter | Type    | Required | Description                                      |
-| --------- | ------- | -------- | ------------------------------------------------ |
-| `url`     | string  | *        | URL to convert to Markdown                       |
-| `text`    | string  | *        | Direct text content to process                   |
-| `prompt`  | string  |          | Custom instructions for LLM processing           |
-| `result`  | string  |          | Response format: `markdown`, `prompt`, or `both` |
-| `stream`  | boolean |          | Enable streaming: true for SSE response          |
-| `token`   | string  |          | Access token for paid tier                       |
-| `memo`    | string  |          | Memo for token activation                        |
-
-*One of `url` or `text` is required.*
-
-### POST / (URL, text, or file upload)
-
-Supports URL conversion, direct text processing, and multipart file uploads. Returns a JSON object containing the Markdown content.
+Simple content conversion using query parameters. Returns Markdown directly.
 
 #### Parameters
 
-| Parameter | Type    | Required | Description                                      |
-| --------- | ------- | -------- | ------------------------------------------------ |
-| `url`     | string  | *        | URL to convert to Markdown                       |
-| `file`    | file    | *        | File to upload (multipart)                       |
-| `text`    | string  | *        | Direct text content to process                   |
-| `prompt`  | string  |          | Custom instructions for LLM processing           |
-| `result`  | string  |          | Response format: `markdown`, `prompt`, or `both` |
-| `stream`  | boolean |          | Enable streaming: true for SSE response          |
-| `token`   | string  |          | Access token for paid tier                       |
-| `memo`    | string  |          | Memo for token activation                        |
+| Parameter | Type    | Required | Description                                                 |
+| --------- | ------- | -------- | ----------------------------------------------------------- |
+| `input`   | string  | *        | Content to convert (URL, text, or data URI — auto-detected) |
+| `prompt`  | string  |          | Custom instructions for LLM processing                      |
+| `result`  | string  |          | Response format: `markdown`, `prompt`, or `both`            |
+| `stream`  | boolean |          | Enable streaming: true for SSE response                     |
+| `token`   | string  |          | Access token for paid tier                                  |
+| `memo`    | string  |          | Memo for token activation                                   |
 
-*One of `url`, `file`, or `text` is required.*
+*The `input` parameter is required.*
+
+### POST / (Content conversion via JSON)
+
+Supports content conversion via JSON body. The `input` parameter accepts URLs, text, or data URIs (auto-detected). Returns a JSON object containing the Markdown content.
+
+#### Parameters
+
+| Parameter | Type    | Required | Description                                                 |
+| --------- | ------- | -------- | ----------------------------------------------------------- |
+| `input`   | string  | *        | Content to convert (URL, text, or data URI — auto-detected) |
+| `prompt`  | string  |          | Custom instructions for LLM processing                      |
+| `result`  | string  |          | Response format: `markdown`, `prompt`, or `both`            |
+| `stream`  | boolean |          | Enable streaming: true for SSE response                     |
+| `token`   | string  |          | Access token for paid tier                                  |
+| `memo`    | string  |          | Memo for token activation                                   |
+
+*The `input` parameter is required.*
 
 ### Result Format Parameter
 
@@ -151,16 +142,18 @@ When `result=both`:
 - **GET requests** return Markdown combining `markdown`, followed by "## Prompt Result" and `prompt_result` (always in Markdown format)
 - **POST requests** return JSON with `markdown` and `prompt_result` fields
 
+> **Auto `result=prompt`:** When `prompt` is provided without an explicit `result`, the core automatically sets `result="prompt"` — so the response contains only the LLM-processed output. To get both Markdown and prompt result, set `result="both"`.
+
 ### Prompt Parameter
 
 The `prompt` parameter lets you specify custom instructions for the LLM to follow when generating the result.
 
-| Use Case           | Example                                                 |
-| ------------------ | ------------------------------------------------------- |
-| Summarize document | `?url=...&prompt=Summarize this document&result=prompt` |
-| Extract key points | `?text=...&prompt=Extract key points&result=prompt`     |
-| Convert to JSON    | `?url=...&prompt=Convert to JSON format&result=prompt`  |
-| Analyze content    | `?text=...&prompt=Analyze and explain&result=prompt`    |
+| Use Case           | Example                                                                           |
+| ------------------ | --------------------------------------------------------------------------------- |
+| Summarize document | `?input=https://example.com/doc.pdf&prompt=Summarize this document&result=prompt` |
+| Extract key points | `?input=Your+text+here&prompt=Extract+key+points&result=prompt`                   |
+| Convert to JSON    | `?input=https://example.com/doc.pdf&prompt=Convert+to+JSON+format&result=prompt`  |
+| Analyze content    | `?input=Your+text+here&prompt=Analyze+and+explain&result=prompt`                  |
 
 ### Streaming Parameter
 
@@ -171,7 +164,7 @@ The `stream` parameter enables Server-Sent Events (SSE) streaming for real-time 
 
 Example:
 ```bash
-curl "https://mdapi.io/?url=...&stream=true"
+curl "https://mdapi.io/?input=...&stream=true"
 ```
 
 Response format (OpenAI-compatible SSE, one JSON object per `data:` line):
@@ -230,63 +223,61 @@ The X-Token-Status header (and token_status field in responses) indicates the cu
 
 ### Endpoints
 
-| Method | Path                                                 | Description                                                                                   |
-| ------ | ---------------------------------------------------- | --------------------------------------------------------------------------------------------- |
-| GET    | /about                                               | About service                                                                                 |
-| GET    | /                                                    | API docs or URL/text conversion (via query parameters: `url`, `text`, `prompt`, `result`)     |
-| POST   | /                                                    | Convert URL, text, or upload file (supports `url`, `file`, `text`, `prompt`, `result` params) |
-| POST   | /v1/chat/completions                                 | OpenAI-compatible endpoint                                                                    |
-| GET    | /mcp                                                 | MCP server manifest                                                                           |
-| POST   | /mcp                                                 | MCP RPC endpoint (discover, tools, resources, subscriptions)                                  |
-| POST   | /acp                                                 | ACP RPC endpoint (IDE agents)                                                                 |
-| POST   | /a2a                                                 | A2A RPC endpoint (agent2agent)                                                                |
-| GET    | /health                                              | Health check                                                                                  |
-| GET    | /llms.txt                                            | API documentation                                                                             |
-| GET    | /llms-full.txt                                       | Full API documentation                                                                        |
-| GET    | /.well-known/ai-discovery.json or /ai-discovery.json | AI discovery                                                                                  |
-| GET    | /.well-known/agent.json        or /agent.json        | AI Agent discovery                                                                            |
-| GET    | /.well-known/agent-card.json   or /agent-card.json   | A2A Agent card                                                                                |
-| GET    | /.well-known/acp.json          or /acp.json          | ACP manifest                                                                                  |
-| GET    | /.well-known/x402.json         or /x402.json         | x402 payment manifest                                                                         |
-| GET    | /.well-known/openapi.json      or /openapi.json      | OpenAPI specification (JSON)                                                                  |
-| GET    | /.well-known/openapi.yaml      or /openapi.yaml      | OpenAPI specification (YAML)                                                                  |
-| GET    | /.well-known/mapi.md           or /mapi.md           | MAPI specification (case-insensitive path MAPI.md support)                                    |
-| GET    | /.well-known/skill.md          or /skill.md          | Skill specification (case-insensitive path SKILL.md support)                                  |
+| Method | Path                                                 | Description                                                                 |
+| ------ | ---------------------------------------------------- | --------------------------------------------------------------------------- |
+| GET    | /about                                               | About service                                                               |
+| GET    | /                                                    | API docs or conversion (via query parameter: `input`, `prompt`, `result`)   |
+| POST   | /                                                    | Convert content via JSON body (supports `input`, `prompt`, `result` params) |
+| POST   | /v1/chat/completions                                 | OpenAI-compatible endpoint                                                  |
+| GET    | /mcp                                                 | MCP server manifest                                                         |
+| POST   | /mcp                                                 | MCP RPC endpoint (discover, tools, resources, subscriptions)                |
+| POST   | /acp                                                 | ACP RPC endpoint (IDE agents)                                               |
+| POST   | /a2a                                                 | A2A RPC endpoint (agent2agent)                                              |
+| GET    | /health                                              | Health check                                                                |
+| GET    | /llms.txt                                            | API documentation                                                           |
+| GET    | /llms-full.txt                                       | Full API documentation                                                      |
+| GET    | /.well-known/ai-discovery.json or /ai-discovery.json | AI discovery                                                                |
+| GET    | /.well-known/agent.json        or /agent.json        | AI Agent discovery                                                          |
+| GET    | /.well-known/agent-card.json   or /agent-card.json   | A2A Agent card                                                              |
+| GET    | /.well-known/acp.json          or /acp.json          | ACP manifest                                                                |
+| GET    | /.well-known/x402.json         or /x402.json         | x402 payment manifest                                                       |
+| GET    | /.well-known/openapi.json      or /openapi.json      | OpenAPI specification (JSON)                                                |
+| GET    | /.well-known/openapi.yaml      or /openapi.yaml      | OpenAPI specification (YAML)                                                |
+| GET    | /.well-known/mapi.md           or /mapi.md           | MAPI specification (case-insensitive path MAPI.md support)                  |
+| GET    | /.well-known/skill.md          or /skill.md          | Skill specification (case-insensitive path SKILL.md support)                |
 
 #### Examples
 
 ```bash
 # URL conversion via GET (free)
-curl "https://mdapi.io/?url=https://example.com/file.pdf"
+curl "https://mdapi.io/?input=https://example.com/file.pdf"
 
 # URL with prompt and result=both (returns markdown + prompt_result)
-curl "https://mdapi.io/?url=https://example.com/file.pdf&prompt=Summarize&result=both"
+curl "https://mdapi.io/?input=https://example.com/file.pdf&prompt=Summarize&result=both"
 
 # Text with prompt and result=prompt (return prompt_result)
-curl "https://mdapi.io/?text=Your+text+here&prompt=Summarize+this&result=prompt"
+curl "https://mdapi.io/?input=Your+text+here&prompt=Summarize+this&result=prompt"
 
 # Token activation via GET (activate and use)
-curl "https://mdapi.io/?url=https://example.com/file.pdf&token=YOUR_TOKEN&memo=YOUR_MEMO"
+curl "https://mdapi.io/?input=https://example.com/file.pdf&token=YOUR_TOKEN&memo=YOUR_MEMO"
 
 # Paid request with token via GET (using token)
-curl "https://mdapi.io/?url=https://example.com/file.pdf&token=YOUR_TOKEN"
+curl "https://mdapi.io/?input=https://example.com/file.pdf&token=YOUR_TOKEN"
 
 # URL conversion via POST (free)
-curl -X POST -F "url=https://example.com/file.pdf" "https://mdapi.io/"
+curl -X POST -H "Content-Type: application/json" -d '{"input":"https://example.com/file.pdf"}' "https://mdapi.io/"
 
-# File upload (multipart/form-data)
-curl -X POST -F "file=@document.pdf" "https://mdapi.io/"
+# Text with prompt via POST
+curl -X POST -H "Content-Type: application/json" -d '{"input":"Your text here","prompt":"Summarize","result":"both"}' "https://mdapi.io/"
 
-# Token activation via POST (activate and use)
-curl -X POST -H "Authorization: Bearer YOUR_TOKEN" -H "X-Memo-Required: YOUR_MEMO" -F "url=https://example.com/file.pdf" "https://mdapi.io/"
-curl -X POST -H "X-Token-Required: YOUR_TOKEN" -H "X-Memo-Required: YOUR_MEMO" -F "url=https://example.com/file.pdf" "https://mdapi.io/"
-curl -X POST -F "token=YOUR_TOKEN" -F "memo=YOUR_MEMO" -F "url=https://example.com/file.pdf" "https://mdapi.io/"
+# File upload via POST (data URI)
+curl -X POST -H "Content-Type: application/json" -d '{"input":"data:application/pdf;base64,JVBERi0xLjQK..."}' "https://mdapi.io/"
 
-# Paid request with token via POST (using token)
-curl -X POST -H "Authorization: Bearer YOUR_TOKEN" -F "file=@document.pdf" "https://mdapi.io/"
-curl -X POST -H "Authorization: Bearer YOUR_TOKEN" -F "url=https://example.com/file.pdf" "https://mdapi.io/"
-curl -X POST -H "X-Token-Required: YOUR_TOKEN" -F "url=https://example.com/file.pdf" "https://mdapi.io/"
-curl -X POST -F "token=YOUR_TOKEN" -F "url=https://example.com/file.pdf" "https://mdapi.io/"
+# Token activation via POST
+curl -X POST -H "Content-Type: application/json" -H "Authorization: Bearer YOUR_TOKEN" -H "X-Memo-Required: YOUR_MEMO" -d '{"input":"https://example.com/file.pdf"}' "https://mdapi.io/"
+
+# Paid request with token via POST
+curl -X POST -H "Content-Type: application/json" -H "Authorization: Bearer YOUR_TOKEN" -d '{"input":"https://example.com/file.pdf"}' "https://mdapi.io/"
 
 ```
 
@@ -298,7 +289,7 @@ The `/v1/chat/completions` endpoint provides an OpenAI‑compatible API for mark
 - URL extraction from message content (any text containing https?://)
 - image_url in messages (OpenAI format) - supports HTTP URLs and data URLs
 - file in messages (OpenAI format) - base64 encoded files (field `file.data`, `file.filename`, `file.mimeType`)
-- Direct text content in messages (any text without a URL is sent to the core as the `text` source and converted to Markdown)
+- Direct text content in messages (any text without a URL is sent to the core as the `input` source and converted to Markdown)
 - Token and memo via headers (recommended for POST)
 - Streaming SSE responses (`stream: true`)
 - Custom instructions with LLM processing (system messages, or user messages containing instruction keywords such as *extract, summarize, analyze, format, convert to, write as, create, generate, json* → LLM-driven summary/extraction/transformation)
@@ -306,7 +297,7 @@ The `/v1/chat/completions` endpoint provides an OpenAI‑compatible API for mark
 
 `model` is accepted but not required (any string; the service uses its own conversion pipeline, not a remote LLM chat model, unless custom instructions trigger LLM processing).
 
-> **Single source per request:** supply exactly one of `url` (a URL in the message text), `text` (raw message content), or `file` (base64 / data-URL) - the same `url` XOR `text` XOR `file` contract as every other protocol.
+> **Content via message text:** the message text is passed to the core as the `input` parameter - the same unified source as every other protocol. URLs are auto-detected, data URIs are decoded as files, and plain text is processed directly.
 > See [Source Parameters (all protocols)](#source-parameters-all-protocols).
 
 #### Request Schema
@@ -346,9 +337,9 @@ The `/v1/chat/completions` endpoint provides an OpenAI‑compatible API for mark
     },
     "token": {"type": "string", "description": "Access token for paid tier"},
     "memo": {"type": "string", "description": "Memo for token activation"},
-    "text": {
+    "input": {
       "type": "string",
-      "description": "Direct text content to convert to Markdown (alternative to a URL/file embedded in messages)"
+      "description": "Content to convert (URL, text, or data URI — auto-detected). Alternative to a URL/file embedded in messages"
     }
   },
   "required": ["messages"]
@@ -361,7 +352,7 @@ The `/v1/chat/completions` endpoint provides an OpenAI‑compatible API for mark
 
 Connect mdapi.io to your MCP-compatible client (spec 2026-07-28, stateless).
 
-> **Single source per request:** the `convert` tool accepts exactly one of `url`, `text`, or `file` - the same `url` XOR `text` XOR `file` contract as every other protocol.
+> **Single source via `input`:** the `convert` tool accepts a unified `input` parameter — the same source as every other protocol. The core auto-detects whether the value is a URL, data URI, or text.
 > See [Source Parameters (all protocols)](#source-parameters-all-protocols).
 
 ### Protocol Requirements
@@ -410,24 +401,9 @@ openclaw config set llm.apiKey YOUR_TOKEN
 
 ### Using MCP with a token
 
-For paid tier, include token in configuration:
+MCP does not use HTTP-level Authorization headers. The token is always passed inside the tool `arguments` object.
 
-```json
-{
-  "mcpServers": {
-    "mdapi": {
-      "url": "https://mdapi.io/mcp",
-      "headers": {
-        "Authorization": "Bearer YOUR_TOKEN"
-      }
-    }
-   }
-}
-```
-
-### Token activation via MCP
-
-To activate a new token, include memo in the first request:
+**Activation** — include `token` + `memo` in the first request:
 
 ```json
 {
@@ -437,15 +413,15 @@ To activate a new token, include memo in the first request:
   "params": {
     "name": "convert",
     "arguments": {
-      "url": "https://example.com/doc.pdf",
-      "token": "YOUR_NEW_TOKEN",
+      "input": "https://example.com/doc.pdf",
+      "token": "YOUR_TOKEN",
       "memo": "YOUR_PAYMENT_MEMO"
     }
   }
 }
 ```
 
-After activation, use token only (no memo needed):
+**After activation** — use `token` only (no memo needed):
 
 ```json
 {
@@ -455,7 +431,7 @@ After activation, use token only (no memo needed):
   "params": {
     "name": "convert",
     "arguments": {
-      "url": "https://example.com/doc.pdf",
+      "input": "https://example.com/doc.pdf",
       "token": "YOUR_ACTIVATED_TOKEN"
     }
   }
@@ -474,7 +450,7 @@ Convert with prompt and result:
   "params": {
     "name": "convert",
     "arguments": {
-      "url": "https://example.com/doc.pdf",
+      "input": "https://example.com/doc.pdf",
       "prompt": "Summarize this document",
       "result": "both",
       "token": "YOUR_TOKEN"
@@ -493,7 +469,7 @@ Process text directly:
   "params": {
     "name": "convert",
     "arguments": {
-      "text": "Your text content here",
+      "input": "Your text content here",
       "prompt": "Extract key points",
       "result": "prompt"
     }
@@ -511,7 +487,7 @@ Stream with SSE (native MCP frames):
   "params": {
     "name": "convert",
     "arguments": {
-      "url": "https://example.com/doc.pdf",
+      "input": "https://example.com/doc.pdf",
       "stream": true
     }
   }
@@ -543,47 +519,89 @@ export MDAPI_TOKEN=YOUR_ACTIVATED_TOKEN
 ### JavaScript (fetch)
 
 ```javascript
-// Convert a URL via GET
-const url = 'https://mdapi.io/?url=https://example.com/doc.pdf';
-const response = await fetch(url);
-
-if (!response.ok) {
-  throw new Error(`HTTP ${response.status}`);
-}
-
+// Convert a URL via GET — returns Markdown directly
+const response = await fetch('https://mdapi.io/?input=https://example.com/doc.pdf');
 const markdown = await response.text();
 console.log(markdown);
 ```
 
 ```javascript
-// Convert a URL via POST
-const formData = new FormData();
-formData.append('url', 'https://example.com/doc.pdf');
-
+// Convert a URL via POST — returns JSON with metadata
 const response = await fetch('https://mdapi.io/', {
   method: 'POST',
-  body: formData
+  headers: { 'Content-Type': 'application/json' },
+  body: JSON.stringify({ input: 'https://example.com/doc.pdf' })
 });
-
-if (!response.ok) {
-  throw new Error(`HTTP ${response.status}`);
-}
-
 const data = await response.json();
-console.log(data);
+console.log(data.markdown);
 ```
 
 ```javascript
-// Text with prompt
-const response = await fetch('https://mdapi.io/?text=Your+text&prompt=Summarize&result=both');
-
-if (!response.ok) {
-  throw new Error(`HTTP ${response.status}`);
-}
-
+// Text with prompt — returns prompt_result
+const response = await fetch('https://mdapi.io/', {
+  method: 'POST',
+  headers: { 'Content-Type': 'application/json' },
+  body: JSON.stringify({
+    input: 'Your text here',
+    prompt: 'Summarize this',
+    result: 'both'
+  })
+});
 const data = await response.json();
 console.log(data.markdown);
 console.log(data.prompt_result);
+```
+
+```javascript
+// File upload via data URI
+const response = await fetch('https://mdapi.io/', {
+  method: 'POST',
+  headers: { 'Content-Type': 'application/json' },
+  body: JSON.stringify({
+    input: 'data:application/pdf;base64,JVBERi0xLjQK...'
+  })
+});
+const data = await response.json();
+console.log(data.markdown);
+```
+
+```javascript
+// Token activation — first request with token + memo
+const response = await fetch('https://mdapi.io/', {
+  method: 'POST',
+  headers: {
+    'Content-Type': 'application/json',
+    'Authorization': 'Bearer YOUR_TOKEN',
+    'X-Memo-Required': 'YOUR_MEMO'
+  },
+  body: JSON.stringify({ input: 'https://example.com/doc.pdf' })
+});
+const data = await response.json();
+// After activation, use token only (no memo needed)
+```
+
+```javascript
+// Streaming via OpenAI-compatible endpoint
+const response = await fetch('https://mdapi.io/v1/chat/completions', {
+  method: 'POST',
+  headers: {
+    'Content-Type': 'application/json',
+    'Authorization': 'Bearer YOUR_TOKEN'
+  },
+  body: JSON.stringify({
+    model: 'markdown-v1',
+    messages: [{ role: 'user', content: 'Convert https://example.com/doc.pdf' }],
+    stream: true
+  })
+});
+
+const reader = response.body.getReader();
+const decoder = new TextDecoder();
+while (true) {
+  const { done, value } = await reader.read();
+  if (done) break;
+  process.stdout.write(decoder.decode(value));
+}
 ```
 
 ### Python
@@ -591,61 +609,84 @@ console.log(data.prompt_result);
 ```python
 import requests
 
-# Convert a URL via GET
-try:
-    response = requests.get('https://mdapi.io/?url=https://example.com/doc.pdf')
-    response.raise_for_status()  # Raises an HTTPError for bad status
-    markdown = response.text
-    print(markdown)
-except requests.exceptions.RequestException as e:
-    print("HTTP error:", e)
+# Convert a URL via GET — returns Markdown directly
+response = requests.get('https://mdapi.io/?input=https://example.com/doc.pdf')
+response.raise_for_status()
+print(response.text)
 ```
 
 ```python
 import requests
 
-# Convert a URL via POST
-try:
-    response = requests.post(
-        'https://mdapi.io/',
-        data={'url': 'https://example.com/doc.pdf'}
-    )
-    response.raise_for_status()
-    data = response.json()
-    print(data)
-except requests.exceptions.RequestException as e:
-    print("HTTP error:", e)
+# Convert a URL via POST — returns JSON with metadata
+response = requests.post(
+    'https://mdapi.io/',
+    json={'input': 'https://example.com/doc.pdf'}
+)
+response.raise_for_status()
+data = response.json()
+print(data['markdown'])
 ```
 
 ```python
 import requests
 
-# Text with prompt
-try:
+# Text with prompt — returns prompt_result
+response = requests.post(
+    'https://mdapi.io/',
+    json={'input': 'Your text', 'prompt': 'Summarize', 'result': 'both'}
+)
+response.raise_for_status()
+data = response.json()
+print(data['markdown'])
+print(data['prompt_result'])
+```
+
+```python
+import requests
+
+# File upload via data URI
+with open('document.pdf', 'rb') as f:
+    import base64
+    file_data = base64.b64encode(f.read()).decode()
     response = requests.post(
         'https://mdapi.io/',
-        data={'text': 'Your text', 'prompt': 'Summarize', 'result': 'both'}
+        json={'input': f'data:application/pdf;base64,{file_data}'}
     )
     response.raise_for_status()
     data = response.json()
     print(data['markdown'])
-    print(data['prompt_result'])
-except requests.exceptions.RequestException as e:
-    print("HTTP error:", e)
 ```
 
 ```python
 import requests
 
-# File upload
-try:
-    with open('document.pdf', 'rb') as f:
-        response = requests.post('https://mdapi.io/', files={'file': f})
-        response.raise_for_status()
-        data = response.json()
-        print(data)
-except requests.exceptions.RequestException as e:
-    print("HTTP error:", e)
+# Token activation
+response = requests.post(
+    'https://mdapi.io/',
+    json={'input': 'https://example.com/doc.pdf'},
+    headers={
+        'Authorization': 'Bearer YOUR_TOKEN',
+        'X-Memo-Required': 'YOUR_MEMO'
+    }
+)
+response.raise_for_status()
+# After activation, use token only (no memo needed)
+```
+
+```python
+from openai import OpenAI
+
+# OpenAI-compatible streaming
+client = OpenAI(base_url='https://mdapi.io/v1', api_key='YOUR_TOKEN')
+stream = client.chat.completions.create(
+    model='markdown-v1',
+    messages=[{'role': 'user', 'content': 'Convert https://example.com/doc.pdf'}],
+    stream=True
+)
+for chunk in stream:
+    if chunk.choices[0].delta.content:
+        print(chunk.choices[0].delta.content, end='')
 ```
 
 ### Go
@@ -654,32 +695,22 @@ except requests.exceptions.RequestException as e:
 package main
 
 import (
-    "encoding/json"
     "fmt"
     "io"
     "net/http"
 )
 
 func main() {
-    // Convert a URL via GET
-    resp, err := http.Get("https://mdapi.io/?url=https://example.com/doc.pdf")
+    // Convert a URL via GET — returns Markdown directly
+    resp, err := http.Get("https://mdapi.io/?input=https://example.com/doc.pdf")
     if err != nil {
         fmt.Println("HTTP error:", err)
         return
     }
     defer resp.Body.Close()
 
-    body, err := io.ReadAll(resp.Body)
-    if err != nil {
-        fmt.Println("Read error:", err)
-        return
-    }
-
-    if resp.StatusCode == 200 {
-        fmt.Println(string(body)) // Markdown as text
-    } else {
-        fmt.Printf("HTTP %d\n%s\n", resp.StatusCode, body)
-    }
+    body, _ := io.ReadAll(resp.Body)
+    fmt.Println(string(body))
 }
 ```
 
@@ -690,27 +721,20 @@ import (
     "bytes"
     "encoding/json"
     "fmt"
-    "mime/multipart"
     "net/http"
 )
 
 func main() {
-    body := &bytes.Buffer{}
-    writer := multipart.NewWriter(body)
+    // Convert a URL via POST — returns JSON with metadata
+    payload, _ := json.Marshal(map[string]string{
+        "input": "https://example.com/doc.pdf",
+    })
 
-    err := writer.WriteField("url", "https://example.com/doc.pdf")
-    if err != nil {
-        fmt.Println("Writer error:", err)
-        return
-    }
-    err = writer.Close()
-    if err != nil {
-        fmt.Println("Writer close error:", err)
-        return
-    }
-
-    // Convert a URL via POST
-    resp, err := http.Post("https://mdapi.io/", writer.FormDataContentType(), body)
+    resp, err := http.Post(
+        "https://mdapi.io/",
+        "application/json",
+        bytes.NewReader(payload),
+    )
     if err != nil {
         fmt.Println("HTTP error:", err)
         return
@@ -718,12 +742,45 @@ func main() {
     defer resp.Body.Close()
 
     var result map[string]interface{}
-    err = json.NewDecoder(resp.Body).Decode(&result)
+    json.NewDecoder(resp.Body).Decode(&result)
+    fmt.Println(result["markdown"])
+}
+```
+
+```go
+package main
+
+import (
+    "bytes"
+    "encoding/base64"
+    "encoding/json"
+    "fmt"
+    "net/http"
+    "os"
+)
+
+func main() {
+    // File upload via data URI
+    fileBytes, _ := os.ReadFile("document.pdf")
+    b64 := base64.StdEncoding.EncodeToString(fileBytes)
+
+    payload, _ := json.Marshal(map[string]string{
+        "input": "data:application/pdf;base64," + b64,
+    })
+
+    resp, err := http.Post(
+        "https://mdapi.io/",
+        "application/json",
+        bytes.NewReader(payload),
+    )
     if err != nil {
-        fmt.Println("JSON decode error:", err)
+        fmt.Println("HTTP error:", err)
         return
     }
+    defer resp.Body.Close()
 
+    var result map[string]interface{}
+    json.NewDecoder(resp.Body).Decode(&result)
     fmt.Println(result["markdown"])
 }
 ```
@@ -737,7 +794,7 @@ use reqwest::Client;
 #[tokio::main]
 async fn main() -> Result<()> {
     let client = Client::new();
-    let url = "https://mdapi.io/?url=https://example.com/doc.pdf";
+    let url = "https://mdapi.io/?input=https://example.com/doc.pdf";
 
     let response = client.get(url).send().await?;
     response.error_for_status_ref()?;
@@ -752,92 +809,22 @@ async fn main() -> Result<()> {
 ```rust
 use anyhow::{Result, Context};
 use reqwest::Client;
-use serde::Deserialize;
-
-#[derive(Deserialize)]
-struct ApiResponse {
-    markdown: Option<String>,
-    prompt_result: Option<String>,
-}
-
-#[tokio::main]
-async fn main() -> Result<()> {
-    let client = Client::new();
-    let token = std::env::var("MDAPI_TOKEN").context("MDAPI_TOKEN not set")?;
-
-    // The `result` field must be set (e.g., "prompt" or "both") when using `prompt` otherwise only markdown is returned.
-    let form_data = [
-        ("url", "https://example.com/doc.pdf"),
-        ("prompt", "Extract key points"),
-        ("result", "both"),
-    ];
-
-    let response = client
-        .post("https://mdapi.io/")
-        .header("Authorization", format!("Bearer {}", token))
-        .form(&form_data)
-        .send()
-        .await
-        .context("Failed to send request to mdapi.io")?;
-
-    response
-        .error_for_status_ref()
-        .context("HTTP error from mdapi.io")?;
-
-    let data: ApiResponse = response.json().await?;
-
-    if let Some(markdown) = data.markdown {
-        println!("Markdown:\n{}", markdown);
-    }
-    if let Some(prompt_result) = data.prompt_result {
-        println!("Prompt result:\n{}", prompt_result);
-    }
-
-    Ok(())
-}
-```
-
-```rust
-use anyhow::Result;
-use reqwest::Client;
-use std::fs::File;
-
-#[tokio::main]
-async fn main() -> Result<()> {
-    let client = Client::new();
-    let token = std::env::var("MDAPI_TOKEN")?;
-    let memo = std::env::var("MDAPI_ACTIVATION_MEMO")?; // memo is required only for first activation
-
-    let form = reqwest::multipart::Form::new()
-        .file("file", File::open("document.pdf")?)
-        .text("token", &token)
-        .text("memo", &memo);
-
-    let response = client
-        .post("https://mdapi.io/")
-        .multipart(form)
-        .send()
-        .await?;
-
-    response.error_for_status_ref()?;
-
-    let markdown = response.text().await?;
-    println!("{}", markdown);
-
-    Ok(())
-}
-```
-
-```rust
-use anyhow::{Result, Context};
-use reqwest::Client;
-use serde::Deserialize;
+use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 
 #[derive(Deserialize)]
 struct ApiResponse {
     markdown: Option<String>,
     prompt_result: Option<String>,
+}
+
+#[derive(Serialize)]
+struct ConvertRequest {
+    input: String,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    prompt: Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    result: Option<String>,
 }
 
 pub struct MdApiClient {
@@ -860,14 +847,16 @@ impl MdApiClient {
         url: &str,
         prompt: Option<&str>,
     ) -> Result<String> {
-        let mut params = HashMap::new();
-        params.insert("url", url);
-        if let Some(prompt) = prompt {
-            params.insert("prompt", prompt);
-            params.insert("result", "both"); // required when using prompt, otherwise only markdown is returned
-        }
+        let body = ConvertRequest {
+            input: url.to_string(),
+            prompt: prompt.map(|p| p.to_string()),
+            result: prompt.map(|_| "both".to_string()),
+        };
 
-        let mut request = self.client.post(&self.base_url).form(&params);
+        let mut request = self.client
+            .post(&self.base_url)
+            .header("Content-Type", "application/json")
+            .json(&body);
 
         if let Some(ref token) = self.token {
             request = request.header("Authorization", format!("Bearer {}", token));
@@ -889,20 +878,44 @@ impl MdApiClient {
     }
 }
 
-// Example usage in an autonomous AI Agent or infrastructure service
+// Example: convert a URL with prompt
 #[tokio::main]
 async fn main() -> Result<()> {
     let token = std::env::var("MDAPI_TOKEN").ok();
     let client = MdApiClient::new(token);
-
     let markdown = client
-        .convert_url(
-            "https://example.com/doc.pdf",
-            Some("Summarize this document"), // when using prompt, result="both" is injected automatically
-        )
+        .convert_url("https://example.com/doc.pdf", Some("Summarize"))
+        .await?;
+    println!("{}", markdown);
+    Ok(())
+}
+```
+
+```rust
+use anyhow::Result;
+use reqwest::Client;
+use base64::engine::general_purpose::STANDARD;
+use base64::Engine;
+
+#[tokio::main]
+async fn main() -> Result<()> {
+    let client = Client::new();
+    let file_bytes = std::fs::read("document.pdf")?;
+    let b64 = STANDARD.encode(&file_bytes);
+
+    let body = serde_json::json!({
+        "input": format!("data:application/pdf;base64,{}", b64)
+    });
+
+    let response = client
+        .post("https://mdapi.io/")
+        .header("Content-Type", "application/json")
+        .json(&body)
+        .send()
         .await?;
 
-    println!("{}", markdown);
+    let data: serde_json::Value = response.json().await?;
+    println!("{}", data["markdown"]);
     Ok(())
 }
 ```
@@ -969,6 +982,18 @@ except Exception as e:
     print("API error:", e)
 ```
 
+#### OpenAI with paid token
+
+```bash
+curl -X POST "https://mdapi.io/v1/chat/completions"   -H "Authorization: Bearer YOUR_TOKEN"   -H "X-Memo-Required: YOUR_MEMO"   -H "Content-Type: application/json"   -d '{"model":"markdown-v1","messages":[{"role":"user","content":"Convert https://example.com/doc.pdf"}]}'
+```
+
+After activation, use token only (no memo needed):
+
+```bash
+curl -X POST "https://mdapi.io/v1/chat/completions"   -H "Authorization: Bearer YOUR_ACTIVATED_TOKEN"   -H "Content-Type: application/json"   -d '{"model":"markdown-v1","messages":[{"role":"user","content":"Convert https://example.com/doc.pdf"}]}'
+```
+
 ## A2A Configuration
 
 Connect mdapi.io to your A2A-compatible agent (Claude Code, Codex, OpenClaw, Hermes, etc.).
@@ -1017,9 +1042,9 @@ Or use JSON-RPC directly:
 | tasks/cancel      | Cancel an in-progress task              |
 | tasks/resubscribe | Subscribe to task updates via SSE       |
 
-> **Single source per request:** provide exactly one of `url`, `text`, or `file` in the message parts (the same contract as the REST endpoint). A bare URL
+> **Single source via `input`:** the `input` parameter in the message parts is the unified source — the same as the REST endpoint. A bare URL
 > inside a text part (e.g. `"Convert https://example.com/doc.pdf"`) is extracted automatically and used as the conversion source, so you don't need to wrap it
-> in structured JSON. Instructions such as `Summarize` should be passed via the structured `{ "url": "...", "prompt": "..." }` form, not mixed into the text.
+> in structured JSON. Instructions such as `Summarize` should be passed via the structured `{ "input": "...", "prompt": "..." }` form, not mixed into the text.
 
 ### A2A Examples
 
@@ -1041,7 +1066,7 @@ curl -X POST https://mdapi.io/a2a   -H "Content-Type: application/a2a+json"   -d
   }'
 ```
 
-#### message/send with file (base64)
+#### message/send with file (data URI)
 
 ```bash
 curl -X POST https://mdapi.io/a2a   -H "Content-Type: application/a2a+json"   -d '{
@@ -1052,11 +1077,7 @@ curl -X POST https://mdapi.io/a2a   -H "Content-Type: application/a2a+json"   -d
       "message": {
         "messageId": "msg-uuid-2",
         "parts": [
-          {
-            "raw": "JVBERi0xLjQK...",
-            "filename": "document.pdf",
-            "mediaType": "application/pdf"
-          }
+          { "text": "{"input":"data:application/pdf;base64,JVBERi0xLjQK..."}" }
         ]
       }
     }
@@ -1076,7 +1097,7 @@ curl -X POST https://mdapi.io/a2a   -H "Content-Type: application/a2a+json"   -d
         "parts": [
           {
             "data": {
-              "url": "https://example.com/doc.pdf",
+              "input": "https://example.com/doc.pdf",
               "result": "markdown"
             },
             "mediaType": "application/json"
@@ -1086,6 +1107,33 @@ curl -X POST https://mdapi.io/a2a   -H "Content-Type: application/a2a+json"   -d
     }
   }'
 ```
+
+#### Token activation via A2A
+
+```bash
+curl -X POST https://mdapi.io/a2a   -H "Content-Type: application/a2a+json"   -d '{
+    "jsonrpc": "2.0",
+    "id": 7,
+    "method": "message/send",
+    "params": {
+      "message": {
+        "messageId": "msg-uuid-7",
+        "parts": [
+          {
+            "data": {
+              "input": "https://example.com/doc.pdf",
+              "token": "YOUR_TOKEN",
+              "memo": "YOUR_PAYMENT_MEMO"
+            },
+            "mediaType": "application/json"
+          }
+        ]
+      }
+    }
+  }'
+```
+
+> **Note on token activation:** Pass `token` and `memo` inside a `data` Part or as JSON inside a `text` Part. A2A does not use HTTP-level Authorization headers.
 
 #### Multi-turn conversation (follow-up)
 
@@ -1132,17 +1180,16 @@ curl -X POST https://mdapi.io/a2a   -H "Content-Type: application/a2a+json"   -d
 
 Messages use the A2A `Part` format (field-name discriminators per spec v1.0.0):
 
-| Type   | Description                        | Fields                                  |
-| ------ | ---------------------------------- | --------------------------------------- |
-| `text` | Plain text content                 | `text`                                  |
-| `data` | Structured JSON data (core params) | `data` (object), `mediaType` (optional) |
-| `file` | File reference (base64 or inline)  | `raw` (base64), `filename`, `mediaType` |
-| `url`  | URL to fetch and convert (file)    | `url` (http/https)                      |
+| Type   | Description                               | Fields                                  |
+| ------ | ----------------------------------------- | --------------------------------------- |
+| `text` | Plain text content or JSON-encoded params | `text`                                  |
+| `data` | Structured JSON data (core params)        | `data` (object), `mediaType` (optional) |
+| `url`  | URL to fetch and convert                  | `url` (http/https)                      |
 
 **Part → Core Parameter Mapping:**
-- `text` Part → `text` param (direct content)
-- `data` Part → merged as params (`url`, `prompt`, `result`, `token`, `memo`, etc.)
-- `raw`/`url` Part → `file` param (base64 decoded or fetched)
+- `text` Part → `input` param (direct content) or JSON-encoded params (`{ "input": "...", "prompt": "..." }`)
+- `data` Part → merged as params (`input`, `prompt`, `result`, `token`, `memo`, etc.)
+- `url` Part → `input` param (fetched and converted)
 
 ### Message Object
 
@@ -1302,8 +1349,8 @@ Response:
 
 Connect mdapi.io to your IDE or coding agent (JetBrains, Cursor, VS Code, etc.) via the Agent Client Protocol. ACP is a JSON-RPC 2.0 endpoint at `POST /acp`.
 
-> **Single source per request:** the `convert` tool accepts exactly one of `url`, `text`, or `file` - the same `url` XOR `text` XOR `file` contract as every other protocol. 
-> See [Source Parameters (all protocols)](#source-parameters-all-protocols). For `file`, `filename` is required so the MIME type can be detected (falls back to `upload.bin` if omitted).
+> **Single source via `input`:** the `convert` tool accepts a unified `input` parameter — the same source as every other protocol. The core auto-detects whether the value is a URL, data URI, or text.
+> See [Source Parameters (all protocols)](#source-parameters-all-protocols).
 
 ### Basic Configuration
 
@@ -1331,7 +1378,7 @@ curl -X POST https://mdapi.io/acp \
     "params": {
       "name": "convert",
       "arguments": {
-        "url": "https://example.com/doc.pdf"
+        "input": "https://example.com/doc.pdf"
       }
     }
   }'
@@ -1360,7 +1407,7 @@ curl -X POST https://mdapi.io/acp \
   "params": {
     "name": "convert",
     "arguments": {
-      "url": "https://example.com/doc.pdf",
+      "input": "https://example.com/doc.pdf",
       "prompt": "Summarize this document",
       "result": "both",
       "stream": true
@@ -1379,7 +1426,7 @@ curl -X POST https://mdapi.io/acp \
   "params": {
     "name": "convert",
     "arguments": {
-      "text": "Your text content here",
+      "input": "Your text content here",
       "prompt": "Extract key points",
       "result": "prompt",
       "stream": false
@@ -1388,7 +1435,7 @@ curl -X POST https://mdapi.io/acp \
 }
 ```
 
-**File conversion (base64 + filename):**
+**File conversion (data URI — auto-detected):**
 
 ```json
 {
@@ -1398,8 +1445,7 @@ curl -X POST https://mdapi.io/acp \
   "params": {
     "name": "convert",
     "arguments": {
-      "file": "JVBERi0xLjQK...",
-      "filename": "document.pdf",
+      "input": "data:application/pdf;base64,JVBERi0xLjQK...",
       "prompt": "Extract the title",
       "result": "markdown",
       "stream": true
@@ -1418,7 +1464,7 @@ curl -X POST https://mdapi.io/acp \
   "params": {
     "name": "convert",
     "arguments": {
-      "url": "https://example.com/doc.pdf",
+      "input": "https://example.com/doc.pdf",
       "token": "YOUR_NEW_TOKEN",
       "memo": "YOUR_PAYMENT_MEMO"
     }
