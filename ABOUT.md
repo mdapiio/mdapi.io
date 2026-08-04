@@ -170,6 +170,7 @@ mdapi.io turns complex input into compact, AI-ready output so humans and autonom
 - **github.com** https://github.com/mdapiio/mdapi.io
 - **skills.sh** https://www.skills.sh/mdapiio/mdapi.io
 - **clawhub.ai** https://clawhub.ai/mdapiio
+- **x.com** https://x.com/mdapiio
 
 ## Disclaimer
 
@@ -177,3 +178,4 @@ mdapi.io turns complex input into compact, AI-ready output so humans and autonom
 
 
 > mdapi.io is an edge-native service-transport primitive for AI, autonomous-agents, and the Web4 ecosystem.
+
