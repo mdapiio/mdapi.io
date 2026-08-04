@@ -52,7 +52,8 @@ Every protocol (REST, MCP, ACP, A2A, OpenAI) converges on the **same conversion 
 | --------- | ------ | --------------------------------------------------------------------------------------------------------------------------- |
 | `input`   | string | Content to convert. Auto-detected: starts with `http(s)://` → URL, starts with `data:` → file (data URI), otherwise → text. |
 
-The `input` parameter is auto-detected by the core: URLs (starting with `http://` or `https://`) are fetched, data URIs (starting with `data:`) are decoded as files, and anything else is treated as raw text. Additional parameters (`prompt`, `result`, `stream`, `token`, `memo`) are orthogonal and may be combined with `input`.
+The `input` parameter is auto-detected by the core: URLs (starting with `http://` or `https://`) are fetched, data URIs (starting with `data:`) are decoded as files, and anything else is treated as raw text.
+Additional parameters (`prompt`, `result`, `stream`, `token`, `memo`) are orthogonal and may be combined with `input`.
 
 All five protocols expose the same `input` source and apply the same transformations, streaming, and prompt-driven processing - the only
 difference is the transport (REST query/JSON, MCP `tools/call`, ACP RPC, OpenAI `messages`, A2A `message.parts`).
