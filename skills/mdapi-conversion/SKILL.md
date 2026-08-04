@@ -431,8 +431,8 @@ emits it in its own native frame format:
 
 | Protocol | Streaming frame format                                                                                                            |
 | -------- | --------------------------------------------------------------------------------------------------------------------------------- |
-| REST     | OpenAI-compatible `choices`/`delta` frames                                                                                        |
-| OpenAI   | `chat.completion.chunk` (`choices`/`delta`)                                                                                       |
+| REST     | OpenAI-compatible `choices/delta` frames                                                                                          |
+| OpenAI   | `chat.completion.chunk` (`choices/delta`)                                                                                         |
 | MCP      | `notifications/message` content chunks, then one final `tools/call` result frame                                                  |
 | ACP      | incremental JSON-RPC `result.content` text chunks, then a final full `result` frame                                               |
 | A2A      | incremental `task.artifacts[].parts[].text` chunks (`TASK_STATE_WORKING`), then a final completed `task` (`TASK_STATE_COMPLETED`) |
