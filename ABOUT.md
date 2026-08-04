@@ -178,4 +178,3 @@ mdapi.io turns complex input into compact, AI-ready output so humans and autonom
 
 
 > mdapi.io is an edge-native service-transport primitive for AI, autonomous-agents, and the Web4 ecosystem.
-
