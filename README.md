@@ -48,9 +48,9 @@ GET /.well-known/ai-discovery.json
 
 Every protocol (REST, MCP, ACP, A2A, OpenAI) converges on the **same conversion core**, so content is specified via a single unified `input` parameter everywhere.
 
-| Parameter | Type   | Description                                                                                                                 |
-| --------- | ------ | --------------------------------------------------------------------------------------------------------------------------- |
-| `input`   | string | Content to convert. Auto-detected: starts with `http(s)://` → URL, starts with `data:` → file (data URI), otherwise → text. |
+| Parameter | Type   | Description                                                                                                                                                        |
+| --------- | ------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `input`   | string | Content to convert: a URL (http(s)://...), a data URI (data:mime/type;base64,...), or plain text. Auto-detected: http(s):// → URL, data: → file, otherwise → text. |
 
 The `input` parameter is auto-detected by the core: URLs (starting with `http://` or `https://`) are fetched, data URIs (starting with `data:`) are decoded as files, and anything else is treated as raw text.
 Additional parameters (`prompt`, `result`, `stream`, `token`, `memo`) are orthogonal and may be combined with `input`.
@@ -102,7 +102,7 @@ Simple content conversion using query parameters. Returns Markdown directly.
 
 | Parameter | Type    | Required | Description                                                 |
 | --------- | ------- | -------- | ----------------------------------------------------------- |
-| `input`   | string  | *        | Content to convert (URL, text, or data URI — auto-detected) |
+| `input`   | string  | *        | Content to convert (URL, text, or data URI - auto-detected) |
 | `prompt`  | string  |          | Custom instructions for LLM processing                      |
 | `result`  | string  |          | Response format: `markdown`, `prompt`, or `both`            |
 | `stream`  | boolean |          | Enable streaming: true for SSE response                     |
@@ -110,6 +110,8 @@ Simple content conversion using query parameters. Returns Markdown directly.
 | `memo`    | string  |          | Memo for token activation                                   |
 
 *The `input` parameter is required.*
+
+> **⚠️ Browser URL limit:** GET requests with long `input` or `prompt` values may exceed browser URL limits (~2048 characters). Use POST with JSON body for large payloads.
 
 ### POST / (Content conversion via JSON)
 
@@ -119,7 +121,7 @@ Supports content conversion via JSON body. The `input` parameter accepts URLs, t
 
 | Parameter | Type    | Required | Description                                                 |
 | --------- | ------- | -------- | ----------------------------------------------------------- |
-| `input`   | string  | *        | Content to convert (URL, text, or data URI — auto-detected) |
+| `input`   | string  | *        | Content to convert (URL, text, or data URI - auto-detected) |
 | `prompt`  | string  |          | Custom instructions for LLM processing                      |
 | `result`  | string  |          | Response format: `markdown`, `prompt`, or `both`            |
 | `stream`  | boolean |          | Enable streaming: true for SSE response                     |
@@ -143,7 +145,7 @@ When `result=both`:
 - **GET requests** return Markdown combining `markdown`, followed by "## Prompt Result" and `prompt_result` (always in Markdown format)
 - **POST requests** return JSON with `markdown` and `prompt_result` fields
 
-> **Auto `result=prompt`:** When `prompt` is provided without an explicit `result`, the core automatically sets `result="prompt"` — so the response contains only the LLM-processed output. To get both Markdown and prompt result, set `result="both"`.
+> **Auto `result=prompt`:** When `prompt` is provided without an explicit `result`, the core automatically sets `result="prompt"` - so the response contains only the LLM-processed output. To get both Markdown and prompt result, set `result="both"`.
 
 ### Prompt Parameter
 
@@ -340,7 +342,7 @@ The `/v1/chat/completions` endpoint provides an OpenAI‑compatible API for mark
     "memo": {"type": "string", "description": "Memo for token activation"},
     "input": {
       "type": "string",
-      "description": "Content to convert (URL, text, or data URI — auto-detected). Alternative to a URL/file embedded in messages"
+      "description": "Content to convert (URL, text, or data URI - auto-detected). Alternative to a URL/file embedded in messages"
     }
   },
   "required": ["messages"]
@@ -353,7 +355,7 @@ The `/v1/chat/completions` endpoint provides an OpenAI‑compatible API for mark
 
 Connect mdapi.io to your MCP-compatible client (spec 2026-07-28, stateless).
 
-> **Single source via `input`:** the `convert` tool accepts a unified `input` parameter — the same source as every other protocol. The core auto-detects whether the value is a URL, data URI, or text.
+> **Single source via `input`:** the `convert` tool accepts a unified `input` parameter - the same source as every other protocol. The core auto-detects whether the value is a URL, data URI, or text.
 > See [Source Parameters (all protocols)](#source-parameters-all-protocols).
 
 ### Protocol Requirements
@@ -404,7 +406,7 @@ openclaw config set llm.apiKey YOUR_TOKEN
 
 MCP does not use HTTP-level Authorization headers. The token is always passed inside the tool `arguments` object.
 
-**Activation** — include `token` + `memo` in the first request:
+**Activation** - include `token` + `memo` in the first request:
 
 ```json
 {
@@ -422,7 +424,7 @@ MCP does not use HTTP-level Authorization headers. The token is always passed in
 }
 ```
 
-**After activation** — use `token` only (no memo needed):
+**After activation** - use `token` only (no memo needed):
 
 ```json
 {
@@ -517,14 +519,14 @@ export MDAPI_TOKEN=YOUR_ACTIVATED_TOKEN
 ### JavaScript (fetch)
 
 ```javascript
-// Convert a URL via GET — returns Markdown directly
+// Convert a URL via GET - returns Markdown directly
 const response = await fetch('https://mdapi.io/?input=https://example.com/doc.pdf');
 const markdown = await response.text();
 console.log(markdown);
 ```
 
 ```javascript
-// Convert a URL via POST — returns JSON with metadata
+// Convert a URL via POST - returns JSON with metadata
 const response = await fetch('https://mdapi.io/', {
   method: 'POST',
   headers: { 'Content-Type': 'application/json' },
@@ -535,7 +537,7 @@ console.log(data.markdown);
 ```
 
 ```javascript
-// Text with prompt — returns prompt_result
+// Text with prompt - returns prompt_result
 const response = await fetch('https://mdapi.io/', {
   method: 'POST',
   headers: { 'Content-Type': 'application/json' },
@@ -564,7 +566,7 @@ console.log(data.markdown);
 ```
 
 ```javascript
-// Token activation — first request with token + memo
+// Token activation - first request with token + memo
 const response = await fetch('https://mdapi.io/', {
   method: 'POST',
   headers: {
@@ -607,7 +609,7 @@ while (true) {
 ```python
 import requests
 
-# Convert a URL via GET — returns Markdown directly
+# Convert a URL via GET - returns Markdown directly
 response = requests.get('https://mdapi.io/?input=https://example.com/doc.pdf')
 response.raise_for_status()
 print(response.text)
@@ -616,7 +618,7 @@ print(response.text)
 ```python
 import requests
 
-# Convert a URL via POST — returns JSON with metadata
+# Convert a URL via POST - returns JSON with metadata
 response = requests.post(
     'https://mdapi.io/',
     json={'input': 'https://example.com/doc.pdf'}
@@ -629,7 +631,7 @@ print(data['markdown'])
 ```python
 import requests
 
-# Text with prompt — returns prompt_result
+# Text with prompt - returns prompt_result
 response = requests.post(
     'https://mdapi.io/',
     json={'input': 'Your text', 'prompt': 'Summarize', 'result': 'both'}
@@ -699,7 +701,7 @@ import (
 )
 
 func main() {
-    // Convert a URL via GET — returns Markdown directly
+    // Convert a URL via GET - returns Markdown directly
     resp, err := http.Get("https://mdapi.io/?input=https://example.com/doc.pdf")
     if err != nil {
         fmt.Println("HTTP error:", err)
@@ -723,7 +725,7 @@ import (
 )
 
 func main() {
-    // Convert a URL via POST — returns JSON with metadata
+    // Convert a URL via POST - returns JSON with metadata
     payload, _ := json.Marshal(map[string]string{
         "input": "https://example.com/doc.pdf",
     })
@@ -1040,7 +1042,7 @@ Or use JSON-RPC directly:
 | tasks/cancel      | Cancel an in-progress task              |
 | tasks/resubscribe | Subscribe to task updates via SSE       |
 
-> **Single source via `input`:** the `input` parameter in the message parts is the unified source — the same as the REST endpoint. A bare URL
+> **Single source via `input`:** the `input` parameter in the message parts is the unified source - the same as the REST endpoint. A bare URL
 > inside a text part (e.g. `"Convert https://example.com/doc.pdf"`) is extracted automatically and used as the conversion source, so you don't need to wrap it
 > in structured JSON. Instructions such as `Summarize` should be passed via the structured `{ "input": "...", "prompt": "..." }` form, not mixed into the text.
 
@@ -1344,7 +1346,7 @@ Response:
 
 Connect mdapi.io to your IDE or coding agent (JetBrains, Cursor, VS Code, etc.) via the Agent Client Protocol. ACP is a JSON-RPC 2.0 endpoint at `POST /acp`.
 
-> **Single source via `input`:** the `convert` tool accepts a unified `input` parameter — the same source as every other protocol. The core auto-detects whether the value is a URL, data URI, or text.
+> **Single source via `input`:** the `convert` tool accepts a unified `input` parameter - the same source as every other protocol. The core auto-detects whether the value is a URL, data URI, or text.
 > See [Source Parameters (all protocols)](#source-parameters-all-protocols).
 
 ### Basic Configuration
@@ -1430,7 +1432,7 @@ curl -X POST https://mdapi.io/acp \
 }
 ```
 
-**File conversion (data URI — auto-detected):**
+**File conversion (data URI - auto-detected):**
 
 ```json
 {
