@@ -32,7 +32,7 @@ GET /.well-known/ai-discovery.json
 - Stateless, in-memory processing
 - Edge execution with automatic scaling
 - Prompt-driven transformation
-- AI‑optimized output for LLMs
+- AI-optimized output for LLMs
 - Pay-per-use via x402 v1/v2 or manual payment
 
 ## Supported Formats
@@ -73,11 +73,10 @@ difference is the transport (REST query/JSON, MCP `tools/call`, ACP RPC, OpenAI 
 
 **Recommended:** Use `Authorization: Bearer TOKEN`
 
-| Method               | Use Case                                                 |
-| -------------------- | -------------------------------------------------------- |
-| Bearer (recommended) | `-H "Authorization: Bearer TOKEN"`                       |
-| Header (x402)        | `-H "X-Token-Required: TOKEN"` (for x402 legacy clients) |
-| Query (legacy)       | `?token=TOKEN` (for simple GET requests)                 |
+| Method               | Use Case                           |
+| -------------------- | ---------------------------------- |
+| Bearer (recommended) | `-H "Authorization: Bearer TOKEN"` |
+| Header               | `-H "X-Token-Required: TOKEN"`     |
 
 ## Token Activation
 
