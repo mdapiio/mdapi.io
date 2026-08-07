@@ -14,7 +14,7 @@ Transforms documents, images, and webpages into AI-ready Markdown and structured
 - Stateless, in-memory processing
 - Edge execution with automatic scaling
 - Prompt-driven transformation
-- AI‑optimized output for LLMs
+- AI-optimized output for LLMs
 - Pay-per-use via x402 v1/v2 or manual payment
 
 ## Philosophy
@@ -125,56 +125,25 @@ Webpages:
 ## Request selection
 
 ### Use GET / when:
-- The user wants direct Markdown output.
-- The input is a URL or plain text passed via `?input=...`.
-- You want the simplest response path.
-- **Note:** GET URLs are limited to ~2048 characters (browser dependent). For long `input` or `prompt` values, use POST.
+- Testing the service or working with small, non-sensitive data.
+- The input (URL, text, or data URI) plus all parameters fit within ~2048 characters.
+- **Indexing:** GET / with any parameters is blocked from search engine indexing.
+- **Security:** GET parameters are logged by browsers, proxies, and servers. Never use GET for sensitive data. If `token`/`memo` must be sent, use `Authorization` header + `X-Memo-Required` header instead of query parameters.
 
 ### Use POST / when:
-- The input is a file (data URI in `input` field).
-- You want a JSON response.
-- You want `markdown`, `prompt_result`, and metadata together.
-- You need programmatic handling.
-- The input (data/prompt) exceeds URL length limits.
+- Anything beyond simple testing - this is the primary API.
+- Data is sensitive (token, memo, proprietary content).
+- Input or prompt exceeds URL length limits.
+- You need a JSON response with `markdown`, `prompt_result`, and metadata.
 
-### Use POST /v1/chat/completions when:
-- The client expects OpenAI-compatible chat format.
-- The request contains messages with URLs, images, or files.
-- You want streaming chat-completion semantics.
+### Use MCP/ACP/A2A/OpenAI protocol when:
+See [Quick Start](#quick-start) table above - choose by your role (IDE plugin → ACP, autonomous agent → A2A, OpenAI SDK → OpenAI API, etc.).
 
-### Use MCP when:
-- The host environment supports MCP discovery and tool calls.
-- The agent should discover mdapi.io as a tool provider.
+## Response format
 
-## Response rules
-
-### GET /
-- Always returns Markdown as plain text.
-- Use query parameters for input and behavior control.
-
-Supported query parameters:
-  - `input` (URL, text, or data URI - auto-detected)
-  - `prompt`
-  - `result`
-  - `stream`
-  - `token`
-  - `memo`
-
- **Note:** GET URLs are limited to ~2048 characters (browser-dependent). For long `input` or `prompt` values, use POST with JSON body.
-
- ### POST /
-- Always returns JSON.
-- Accepts JSON body (`application/json`).
-
-Expected JSON fields may include:
-- `success`
-- `markdown`
-- `prompt_result`
-- `resource`
-- `mimetype`
-- `token_status` - Can be: free, valid, invalid, expired, exhausted, expired_pending, activated, verification_error, invalid_payment, error, pending
-- `token_balance`
-- `token_expires`
+- **GET /** - returns Markdown directly. Query parameters are not indexed by search engines.
+- **POST /** - returns JSON with `markdown`, `prompt_result`, `resource`, `mimetype`, and token info.
+- **Protocols** - each wraps the core JSON response in its own format (see protocol sections below).
 
 ## Token Status
 
@@ -229,12 +198,11 @@ Examples:
 
 ## Authentication
 
-Preferred:
-- `Authorization: Bearer TOKEN`
+**Preferred:**
+- `Authorization: Bearer TOKEN` header
 
-Legacy:
-- `X-Token-Required: TOKEN`
-- `?token=TOKEN`
+**Alternative:**
+- `X-Token-Required: TOKEN` header
 
 Tokens are obtained from the `402 Payment Required` response after payment.
 Store tokens securely for subsequent requests. Do not log or echo raw tokens in responses.
@@ -341,10 +309,8 @@ After payment, activate the paid token with the exact token and memo from the `4
 - After successful activation, subsequent requests must use the token only.
 
 #### Accepted activation styles
-- `Authorization: Bearer TOKEN` with `X-Memo-Required: MEMO`
+- `Authorization: Bearer TOKEN` with `X-Memo-Required: MEMO` (preferred)
 - `X-Token-Required: TOKEN` with `X-Memo-Required: MEMO`
-- form fields `token=TOKEN` and `memo=MEMO`
-- query parameters `token=TOKEN` and `memo=MEMO`
 
 #### Activation behavior
 If activation succeeds, continue the conversion in the same request and return the normal output.
