@@ -177,8 +177,8 @@ Use `result` to control how much output is returned.
 
 Rules:
 - If `prompt` is present and both outputs are useful, use `result=both`.
-- If the user explicitly asks for extracted or transformed output only, use `result=prompt`.
-- If the user asks for plain conversion, use `result=markdown`.
+- If `prompt` is present and only LLM output is needed, omit `result` (defaults to `prompt`).
+- If no `prompt` and plain conversion is needed, omit `result` (defaults to `markdown`).
 
 ## Prompt usage
 
@@ -457,7 +457,7 @@ If using a paid token, pass it as a tool argument (MCP does not forward HTTP hea
   "params": {
     "name": "convert",
     "arguments": {
-      "input": "https://example.com/doc.pdf",
+      "input": "https://example.com",
       "token": "YOUR_TOKEN",
       "memo": "YOUR_PAYMENT_MEMO"
     }
@@ -479,7 +479,7 @@ Example request:
   "params": {
     "name": "convert",
     "arguments": {
-      "input": "https://example.com/doc.pdf",
+      "input": "https://example.com",
       "prompt": "Summarize",
       "result": "both"
     }
@@ -497,7 +497,7 @@ ACP token activation (first request):
   "params": {
     "name": "convert",
     "arguments": {
-      "input": "https://example.com/doc.pdf",
+      "input": "https://example.com",
       "token": "YOUR_TOKEN",
       "memo": "YOUR_PAYMENT_MEMO"
     }
@@ -529,7 +529,7 @@ Example request:
     "message": {
       "messageId": "msg_1",
       "parts": [
-        {"text": "Convert https://example.com/doc.pdf"}
+        {"text": "Convert https://example.com"}
       ]
     }
   }
@@ -549,7 +549,7 @@ A2A token activation (pass token in message data parts):
       "parts": [
         {
           "data": {
-            "input": "https://example.com/doc.pdf",
+            "input": "https://example.com",
             "token": "YOUR_TOKEN",
             "memo": "YOUR_PAYMENT_MEMO"
           },
@@ -653,7 +653,7 @@ Both agent.json and agent-card.json exist because different standards require di
 - If the user gives a public URL and wants Markdown, use `GET /?input=https://...`.
 - If the user provides a file (data URI), use `POST /` with `{"input":"data:..."}`.
 - If the user provides text, use `GET /?input=...` or `POST /` with `{"input":"..."}`.
-- If the user wants extraction or summarization, set `prompt` and `result=prompt` or `result=both`.
+- If the user wants extraction or summarization, set `prompt` (auto result=prompt) or `result=both` for both outputs.
 - If the user wants structured programmatic output, prefer `POST /`.
 - If the response requires payment, handle manual or autonomous payment as appropriate.
 - If the response is long, enable streaming.
@@ -663,27 +663,27 @@ Both agent.json and agent-card.json exist because different standards require di
 
 ### URL to Markdown
 ```bash
-curl "https://mdapi.io/?input=https://example.com/page"
+curl "https://mdapi.io/?input=https://example.com"
 ```
 
 ### URL with prompt and both outputs
 ```bash
-curl "https://mdapi.io/?input=https://example.com/page&prompt=Summarize+this&result=both"
+curl "https://mdapi.io/?input=https://example.com&prompt=Summarize&result=both"
 ```
 
 ### Text with prompt
 ```bash
-curl "https://mdapi.io/?input=Hello+World&prompt=Extract+key+points&result=prompt"
+curl "https://mdapi.io/?input=Hello World&prompt=Extract key points"
 ```
 
 ### File upload (data URI)
 ```bash
-curl -X POST -H "Content-Type: application/json" -d '{"input":"data:application/pdf;base64,JVBERi0xLjQK..."}' "https://mdapi.io/"
+curl -X POST -H "Content-Type: application/json" -d '{"input":"data:text/plain;base64,SGVsbG8gV29ybGQ="}' "https://mdapi.io/"
 ```
 
 ### Paid request with token activation
 ```bash
-curl -H "Authorization: Bearer YOUR_TOKEN" -H "X-Memo-Required: YOUR_MEMO" "https://mdapi.io/?input=https://example.com/doc.pdf"
+curl -H "Authorization: Bearer YOUR_TOKEN" -H "X-Memo-Required: YOUR_MEMO" "https://mdapi.io/?input=https://example.com"
 ```
 
 ### OpenAI-compatible request
@@ -693,7 +693,7 @@ curl -H "Authorization: Bearer YOUR_TOKEN" -H "X-Memo-Required: YOUR_MEMO" "http
   "messages": [
     {
       "role": "user",
-      "content": "Convert https://example.com/doc.pdf"
+      "content": "Convert https://example.com"
     }
   ],
   "stream": false
@@ -703,13 +703,13 @@ curl -H "Authorization: Bearer YOUR_TOKEN" -H "X-Memo-Required: YOUR_MEMO" "http
 ### OpenAI-compatible with paid token
 
 ```bash
-curl -X POST "https://mdapi.io/v1/chat/completions"   -H "Authorization: Bearer YOUR_TOKEN"   -H "X-Memo-Required: YOUR_MEMO"   -H "Content-Type: application/json"   -d '{"model":"markdown-v1","messages":[{"role":"user","content":"Convert https://example.com/doc.pdf"}]}'
+curl -X POST "https://mdapi.io/v1/chat/completions"   -H "Authorization: Bearer YOUR_TOKEN"   -H "X-Memo-Required: YOUR_MEMO"   -H "Content-Type: application/json"   -d '{"model":"markdown-v1","messages":[{"role":"user","content":"Convert https://example.com"}]}'
 ```
 
 After activation, use token only (no memo needed):
 
 ```bash
-curl -X POST "https://mdapi.io/v1/chat/completions"   -H "Authorization: Bearer YOUR_ACTIVATED_TOKEN"   -H "Content-Type: application/json"   -d '{"model":"markdown-v1","messages":[{"role":"user","content":"Convert https://example.com/doc.pdf"}]}'
+curl -X POST "https://mdapi.io/v1/chat/completions"   -H "Authorization: Bearer YOUR_ACTIVATED_TOKEN"   -H "Content-Type: application/json"   -d '{"model":"markdown-v1","messages":[{"role":"user","content":"Convert https://example.com"}]}'
 ```
 
 ## Output discipline
