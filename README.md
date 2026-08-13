@@ -144,18 +144,18 @@ When `result=both`:
 - **GET requests** return Markdown combining `markdown`, followed by "## Prompt Result" and `prompt_result` (always in Markdown format)
 - **POST requests** return JSON with `markdown` and `prompt_result` fields
 
-> **Auto `result=prompt`:** When `prompt` is provided without an explicit `result`, the core automatically sets `result="prompt"` - so the response contains only the LLM-processed output. To get both Markdown and prompt result, set `result="both"`.
+> **Auto `result`:** When `prompt` is provided without an explicit `result`, the core automatically sets `result="prompt"` (LLM output only). Without `prompt`, default is `result="markdown"`. Only specify `result` explicitly when you need both (`result="both"`).
 
 ### Prompt Parameter
 
 The `prompt` parameter lets you specify custom instructions for the LLM to follow when generating the result.
 
-| Use Case           | Example                                                                           |
-| ------------------ | --------------------------------------------------------------------------------- |
-| Summarize document | `?input=https://example.com/doc.pdf&prompt=Summarize this document&result=prompt` |
-| Extract key points | `?input=Your+text+here&prompt=Extract+key+points&result=prompt`                   |
-| Convert to JSON    | `?input=https://example.com/doc.pdf&prompt=Convert+to+JSON+format&result=prompt`  |
-| Analyze content    | `?input=Your+text+here&prompt=Analyze+and+explain&result=prompt`                  |
+| Use Case           | Example                                                    |
+| ------------------ | ---------------------------------------------------------- |
+| Summarize          | `?input=https://example.com&prompt=Summarize`              |
+| Extract key points | `?input=Hello World&prompt=Extract key points`             |
+| Convert to JSON    | `?input=https://example.com&prompt=Convert to JSON format` |
+| Analyze content    | `?input=Hello World&prompt=Analyze and explain`            |
 
 ### Streaming Parameter
 
@@ -171,7 +171,7 @@ curl "https://mdapi.io/?input=...&stream=true"
 
 Response format (OpenAI-compatible SSE, one JSON object per `data:` line):
 ```json
-data: {"type":"token_info","status":"valid","balance":99,"expires":1798761600,"resource":"https://example.com/file.pdf","mimetype":"application/pdf"}
+data: {"type":"token_info","status":"valid","balance":99,"expires":1798761600,"resource":"https://example.com","mimetype":"text/html"}
 data: {"choices":[{"index":0,"delta":{"content":" chunk"},"finish_reason":null}]}
 data: {"choices":[{"index":0,"delta":{"content":" more"},"finish_reason":null}]}
 data: {"choices":[{"index":0,"delta":{},"finish_reason":"stop"}]}
@@ -252,34 +252,34 @@ The X-Token-Status header (and token_status field in responses) indicates the cu
 
 ```bash
 # URL conversion via GET (free)
-curl "https://mdapi.io/?input=https://example.com/file.pdf"
+curl "https://mdapi.io/?input=https://example.com"
 
 # URL with prompt and result=both (returns markdown + prompt_result)
-curl "https://mdapi.io/?input=https://example.com/file.pdf&prompt=Summarize&result=both"
+curl "https://mdapi.io/?input=https://example.com&prompt=Summarize&result=both"
 
-# Text with prompt and result=prompt (return prompt_result)
-curl "https://mdapi.io/?input=Your+text+here&prompt=Summarize+this&result=prompt"
+# Text with prompt (auto result=prompt)
+curl "https://mdapi.io/?input=Hello World&prompt=Summarize"
 
 # Token activation via GET (activate and use)
-curl "https://mdapi.io/?input=https://example.com/file.pdf&token=YOUR_TOKEN&memo=YOUR_MEMO"
+curl "https://mdapi.io/?input=https://example.com&token=YOUR_TOKEN&memo=YOUR_MEMO"
 
 # Paid request with token via GET (using token)
-curl "https://mdapi.io/?input=https://example.com/file.pdf&token=YOUR_TOKEN"
+curl "https://mdapi.io/?input=https://example.com&token=YOUR_TOKEN"
 
 # URL conversion via POST (free)
-curl -X POST -H "Content-Type: application/json" -d '{"input":"https://example.com/file.pdf"}' "https://mdapi.io/"
+curl -X POST -H "Content-Type: application/json" -d '{"input":"https://example.com"}' "https://mdapi.io/"
 
 # Text with prompt via POST
-curl -X POST -H "Content-Type: application/json" -d '{"input":"Your text here","prompt":"Summarize","result":"both"}' "https://mdapi.io/"
+curl -X POST -H "Content-Type: application/json" -d '{"input":"Hello World","prompt":"Summarize","result":"both"}' "https://mdapi.io/"
 
 # File upload via POST (data URI)
-curl -X POST -H "Content-Type: application/json" -d '{"input":"data:application/pdf;base64,JVBERi0xLjQK..."}' "https://mdapi.io/"
+curl -X POST -H "Content-Type: application/json" -d '{"input":"data:text/plain;base64,SGVsbG8gV29ybGQ="}' "https://mdapi.io/"
 
 # Token activation via POST
-curl -X POST -H "Content-Type: application/json" -H "Authorization: Bearer YOUR_TOKEN" -H "X-Memo-Required: YOUR_MEMO" -d '{"input":"https://example.com/file.pdf"}' "https://mdapi.io/"
+curl -X POST -H "Content-Type: application/json" -H "Authorization: Bearer YOUR_TOKEN" -H "X-Memo-Required: YOUR_MEMO" -d '{"input":"https://example.com"}' "https://mdapi.io/"
 
 # Paid request with token via POST
-curl -X POST -H "Content-Type: application/json" -H "Authorization: Bearer YOUR_TOKEN" -d '{"input":"https://example.com/file.pdf"}' "https://mdapi.io/"
+curl -X POST -H "Content-Type: application/json" -H "Authorization: Bearer YOUR_TOKEN" -d '{"input":"https://example.com"}' "https://mdapi.io/"
 
 ```
 
@@ -295,7 +295,7 @@ The `/v1/chat/completions` endpoint provides an OpenAI‑compatible API for mark
 - Token and memo via headers (recommended for POST)
 - Streaming SSE responses (`stream: true`)
 - Custom instructions with LLM processing (system messages, or user messages containing instruction keywords such as *extract, summarize, analyze, format, convert to, write as, create, generate, json* → LLM-driven summary/extraction/transformation)
-- `prompt` + `result` for LLM-processed output. The response surfaces `prompt_result`, `resource`, and `mimetype` at the top level alongside the standard `choices[].message.content` (which carries `prompt_result` for `result=prompt`, otherwise the Markdown).
+- `prompt` for LLM-processed output. The response surfaces `prompt_result`, `resource`, and `mimetype` at the top level alongside the standard `choices[].message.content` (which carries `prompt_result` when prompt is set, otherwise the Markdown).
 
 `model` is accepted but not required (any string; the service uses its own conversion pipeline, not a remote LLM chat model, unless custom instructions trigger LLM processing).
 
@@ -415,7 +415,7 @@ MCP does not use HTTP-level Authorization headers. The token is always passed in
   "params": {
     "name": "convert",
     "arguments": {
-      "input": "https://example.com/doc.pdf",
+      "input": "https://example.com",
       "token": "YOUR_TOKEN",
       "memo": "YOUR_PAYMENT_MEMO"
     }
@@ -433,7 +433,7 @@ MCP does not use HTTP-level Authorization headers. The token is always passed in
   "params": {
     "name": "convert",
     "arguments": {
-      "input": "https://example.com/doc.pdf",
+      "input": "https://example.com",
       "token": "YOUR_ACTIVATED_TOKEN"
     }
   }
@@ -452,8 +452,8 @@ Convert with prompt and result:
   "params": {
     "name": "convert",
     "arguments": {
-      "input": "https://example.com/doc.pdf",
-      "prompt": "Summarize this document",
+      "input": "https://example.com",
+      "prompt": "Summarize",
       "result": "both",
       "token": "YOUR_TOKEN"
     }
@@ -471,7 +471,7 @@ Process text directly:
   "params": {
     "name": "convert",
     "arguments": {
-      "input": "Your text content here",
+      "input": "Hello World",
       "prompt": "Extract key points",
       "result": "prompt"
     }
@@ -489,7 +489,7 @@ Stream with SSE (native MCP frames):
   "params": {
     "name": "convert",
     "arguments": {
-      "input": "https://example.com/doc.pdf",
+      "input": "https://example.com",
       "stream": true
     }
   }
@@ -519,7 +519,7 @@ export MDAPI_TOKEN=YOUR_ACTIVATED_TOKEN
 
 ```javascript
 // Convert a URL via GET - returns Markdown directly
-const response = await fetch('https://mdapi.io/?input=https://example.com/doc.pdf');
+const response = await fetch('https://mdapi.io/?input=https://example.com');
 const markdown = await response.text();
 console.log(markdown);
 ```
@@ -529,7 +529,7 @@ console.log(markdown);
 const response = await fetch('https://mdapi.io/', {
   method: 'POST',
   headers: { 'Content-Type': 'application/json' },
-  body: JSON.stringify({ input: 'https://example.com/doc.pdf' })
+  body: JSON.stringify({ input: 'https://example.com' })
 });
 const data = await response.json();
 console.log(data.markdown);
@@ -541,8 +541,8 @@ const response = await fetch('https://mdapi.io/', {
   method: 'POST',
   headers: { 'Content-Type': 'application/json' },
   body: JSON.stringify({
-    input: 'Your text here',
-    prompt: 'Summarize this',
+    input: 'Hello World',
+    prompt: 'Summarize',
     result: 'both'
   })
 });
@@ -557,7 +557,7 @@ const response = await fetch('https://mdapi.io/', {
   method: 'POST',
   headers: { 'Content-Type': 'application/json' },
   body: JSON.stringify({
-    input: 'data:application/pdf;base64,JVBERi0xLjQK...'
+    input: 'data:text/plain;base64,SGVsbG8gV29ybGQ='
   })
 });
 const data = await response.json();
@@ -573,7 +573,7 @@ const response = await fetch('https://mdapi.io/', {
     'Authorization': 'Bearer YOUR_TOKEN',
     'X-Memo-Required': 'YOUR_MEMO'
   },
-  body: JSON.stringify({ input: 'https://example.com/doc.pdf' })
+  body: JSON.stringify({ input: 'https://example.com' })
 });
 const data = await response.json();
 // After activation, use token only (no memo needed)
@@ -589,7 +589,7 @@ const response = await fetch('https://mdapi.io/v1/chat/completions', {
   },
   body: JSON.stringify({
     model: 'markdown-v1',
-    messages: [{ role: 'user', content: 'Convert https://example.com/doc.pdf' }],
+    messages: [{ role: 'user', content: 'Convert https://example.com' }],
     stream: true
   })
 });
@@ -609,7 +609,7 @@ while (true) {
 import requests
 
 # Convert a URL via GET - returns Markdown directly
-response = requests.get('https://mdapi.io/?input=https://example.com/doc.pdf')
+response = requests.get('https://mdapi.io/?input=https://example.com')
 response.raise_for_status()
 print(response.text)
 ```
@@ -620,7 +620,7 @@ import requests
 # Convert a URL via POST - returns JSON with metadata
 response = requests.post(
     'https://mdapi.io/',
-    json={'input': 'https://example.com/doc.pdf'}
+    json={'input': 'https://example.com'}
 )
 response.raise_for_status()
 data = response.json()
@@ -633,7 +633,7 @@ import requests
 # Text with prompt - returns prompt_result
 response = requests.post(
     'https://mdapi.io/',
-    json={'input': 'Your text', 'prompt': 'Summarize', 'result': 'both'}
+    json={'input': 'Hello World', 'prompt': 'Summarize', 'result': 'both'}
 )
 response.raise_for_status()
 data = response.json()
@@ -650,7 +650,7 @@ with open('document.pdf', 'rb') as f:
     file_data = base64.b64encode(f.read()).decode()
     response = requests.post(
         'https://mdapi.io/',
-        json={'input': f'data:application/pdf;base64,{file_data}'}
+        json={'input': f'data:text/plain;base64,{file_data}'}
     )
     response.raise_for_status()
     data = response.json()
@@ -663,7 +663,7 @@ import requests
 # Token activation
 response = requests.post(
     'https://mdapi.io/',
-    json={'input': 'https://example.com/doc.pdf'},
+    json={'input': 'https://example.com'},
     headers={
         'Authorization': 'Bearer YOUR_TOKEN',
         'X-Memo-Required': 'YOUR_MEMO'
@@ -680,7 +680,7 @@ from openai import OpenAI
 client = OpenAI(base_url='https://mdapi.io/v1', api_key='YOUR_TOKEN')
 stream = client.chat.completions.create(
     model='markdown-v1',
-    messages=[{'role': 'user', 'content': 'Convert https://example.com/doc.pdf'}],
+    messages=[{'role': 'user', 'content': 'Convert https://example.com'}],
     stream=True
 )
 for chunk in stream:
@@ -701,7 +701,7 @@ import (
 
 func main() {
     // Convert a URL via GET - returns Markdown directly
-    resp, err := http.Get("https://mdapi.io/?input=https://example.com/doc.pdf")
+    resp, err := http.Get("https://mdapi.io/?input=https://example.com")
     if err != nil {
         fmt.Println("HTTP error:", err)
         return
@@ -726,7 +726,7 @@ import (
 func main() {
     // Convert a URL via POST - returns JSON with metadata
     payload, _ := json.Marshal(map[string]string{
-        "input": "https://example.com/doc.pdf",
+        "input": "https://example.com",
     })
 
     resp, err := http.Post(
@@ -764,7 +764,7 @@ func main() {
     b64 := base64.StdEncoding.EncodeToString(fileBytes)
 
     payload, _ := json.Marshal(map[string]string{
-        "input": "data:application/pdf;base64," + b64,
+        "input": "data:text/plain;base64," + b64,
     })
 
     resp, err := http.Post(
@@ -793,7 +793,7 @@ use reqwest::Client;
 #[tokio::main]
 async fn main() -> Result<()> {
     let client = Client::new();
-    let url = "https://mdapi.io/?input=https://example.com/doc.pdf";
+    let url = "https://mdapi.io/?input=https://example.com";
 
     let response = client.get(url).send().await?;
     response.error_for_status_ref()?;
@@ -883,7 +883,7 @@ async fn main() -> Result<()> {
     let token = std::env::var("MDAPI_TOKEN").ok();
     let client = MdApiClient::new(token);
     let markdown = client
-        .convert_url("https://example.com/doc.pdf", Some("Summarize"))
+        .convert_url("https://example.com", Some("Summarize"))
         .await?;
     println!("{}", markdown);
     Ok(())
@@ -903,7 +903,7 @@ async fn main() -> Result<()> {
     let b64 = STANDARD.encode(&file_bytes);
 
     let body = serde_json::json!({
-        "input": format!("data:application/pdf;base64,{}", b64)
+        "input": format!("data:text/plain;base64,{}", b64)
     });
 
     let response = client
@@ -935,7 +935,7 @@ async fn main() -> Result<()> {
         "messages": [
             {
                 "role": "user",
-                "content": "Convert https://example.com/doc.pdf"
+                "content": "Convert https://example.com"
             }
         ],
         "stream": true
@@ -974,7 +974,7 @@ client = OpenAI(
 try:
     response = client.chat.completions.create(
         model="markdown-v1",
-        messages=[{"role": "user", "content": "Convert https://example.com/doc.pdf"}]
+        messages=[{"role": "user", "content": "Convert https://example.com"}]
     )
     print(response.choices[0].message.content)
 except Exception as e:
@@ -984,13 +984,13 @@ except Exception as e:
 #### OpenAI with paid token
 
 ```bash
-curl -X POST "https://mdapi.io/v1/chat/completions"   -H "Authorization: Bearer YOUR_TOKEN"   -H "X-Memo-Required: YOUR_MEMO"   -H "Content-Type: application/json"   -d '{"model":"markdown-v1","messages":[{"role":"user","content":"Convert https://example.com/doc.pdf"}]}'
+curl -X POST "https://mdapi.io/v1/chat/completions"   -H "Authorization: Bearer YOUR_TOKEN"   -H "X-Memo-Required: YOUR_MEMO"   -H "Content-Type: application/json"   -d '{"model":"markdown-v1","messages":[{"role":"user","content":"Convert https://example.com"}]}'
 ```
 
 After activation, use token only (no memo needed):
 
 ```bash
-curl -X POST "https://mdapi.io/v1/chat/completions"   -H "Authorization: Bearer YOUR_ACTIVATED_TOKEN"   -H "Content-Type: application/json"   -d '{"model":"markdown-v1","messages":[{"role":"user","content":"Convert https://example.com/doc.pdf"}]}'
+curl -X POST "https://mdapi.io/v1/chat/completions"   -H "Authorization: Bearer YOUR_ACTIVATED_TOKEN"   -H "Content-Type: application/json"   -d '{"model":"markdown-v1","messages":[{"role":"user","content":"Convert https://example.com"}]}'
 ```
 
 ## A2A Configuration
@@ -1023,7 +1023,7 @@ Or use JSON-RPC directly:
       "message": {
         "messageId": "msg-uuid-1",
          "parts": [
-           { "text": "Convert https://example.com/doc.pdf" }
+           { "text": "Convert https://example.com" }
         ]
       }
   }
@@ -1042,7 +1042,7 @@ Or use JSON-RPC directly:
 | tasks/resubscribe | Subscribe to task updates via SSE       |
 
 > **Single source via `input`:** the `input` parameter in the message parts is the unified source - the same as the REST endpoint. A bare URL
-> inside a text part (e.g. `"Convert https://example.com/doc.pdf"`) is extracted automatically and used as the conversion source, so you don't need to wrap it
+> inside a text part (e.g. `"Convert https://example.com"`) is extracted automatically and used as the conversion source, so you don't need to wrap it
 > in structured JSON. Instructions such as `Summarize` should be passed via the structured `{ "input": "...", "prompt": "..." }` form, not mixed into the text.
 
 ### A2A Examples
@@ -1058,7 +1058,7 @@ curl -X POST https://mdapi.io/a2a   -H "Content-Type: application/a2a+json"   -d
       "message": {
         "messageId": "msg-uuid-1",
         "parts": [
-          { "text": "Convert https://example.com/doc.pdf" }
+          { "text": "Convert https://example.com" }
         ]
       }
     }
@@ -1076,7 +1076,7 @@ curl -X POST https://mdapi.io/a2a   -H "Content-Type: application/a2a+json"   -d
       "message": {
         "messageId": "msg-uuid-2",
         "parts": [
-          { "text": "{"input":"data:application/pdf;base64,JVBERi0xLjQK..."}" }
+          { "text": "{"input":"data:text/plain;base64,SGVsbG8gV29ybGQ="}" }
         ]
       }
     }
@@ -1096,7 +1096,7 @@ curl -X POST https://mdapi.io/a2a   -H "Content-Type: application/a2a+json"   -d
         "parts": [
           {
             "data": {
-              "input": "https://example.com/doc.pdf",
+              "input": "https://example.com",
               "result": "markdown"
             },
             "mediaType": "application/json"
@@ -1120,7 +1120,7 @@ curl -X POST https://mdapi.io/a2a   -H "Content-Type: application/a2a+json"   -d
         "parts": [
           {
             "data": {
-              "input": "https://example.com/doc.pdf",
+              "input": "https://example.com",
               "token": "YOUR_TOKEN",
               "memo": "YOUR_PAYMENT_MEMO"
             },
@@ -1283,7 +1283,7 @@ curl -X POST https://mdapi.io/a2a   -H "Content-Type: application/a2a+json"   -H
       "message": {
         "messageId": "msg-uuid-5",
          "parts": [
-           { "text": "Convert https://example.com/doc.pdf" }
+           { "text": "Convert https://example.com" }
          ]
       }
     }
@@ -1374,7 +1374,7 @@ curl -X POST https://mdapi.io/acp \
     "params": {
       "name": "convert",
       "arguments": {
-        "input": "https://example.com/doc.pdf"
+        "input": "https://example.com"
       }
     }
   }'
@@ -1403,8 +1403,8 @@ curl -X POST https://mdapi.io/acp \
   "params": {
     "name": "convert",
     "arguments": {
-      "input": "https://example.com/doc.pdf",
-      "prompt": "Summarize this document",
+      "input": "https://example.com",
+      "prompt": "Summarize",
       "result": "both",
       "stream": true
     }
@@ -1422,7 +1422,7 @@ curl -X POST https://mdapi.io/acp \
   "params": {
     "name": "convert",
     "arguments": {
-      "input": "Your text content here",
+      "input": "Hello World",
       "prompt": "Extract key points",
       "result": "prompt",
       "stream": false
@@ -1441,7 +1441,7 @@ curl -X POST https://mdapi.io/acp \
   "params": {
     "name": "convert",
     "arguments": {
-      "input": "data:application/pdf;base64,JVBERi0xLjQK...",
+      "input": "data:text/plain;base64,SGVsbG8gV29ybGQ=",
       "prompt": "Extract the title",
       "result": "markdown",
       "stream": true
@@ -1460,7 +1460,7 @@ curl -X POST https://mdapi.io/acp \
   "params": {
     "name": "convert",
     "arguments": {
-      "input": "https://example.com/doc.pdf",
+      "input": "https://example.com",
       "token": "YOUR_NEW_TOKEN",
       "memo": "YOUR_PAYMENT_MEMO"
     }
@@ -1480,7 +1480,7 @@ ACP returns a JSON-RPC 2.0 result with a `content` array. The `convert` tool map
     "content": [
       { "type": "text", "text": "<converted Markdown>" },
       { "type": "text", "text": "<prompt_result, when result=prompt|both>" },
-      { "type": "resource_link", "uri": "https://example.com/doc.pdf", "name": "https://example.com/doc.pdf" }
+      { "type": "resource_link", "uri": "https://example.com", "name": "https://example.com" }
     ],
     "isError": false
   }
@@ -1535,6 +1535,7 @@ See https://mdapi.io/about for the full scenario walkthrough.
 
 - **github.com** https://github.com/mdapiio/mdapi.io
 - **skills.sh** https://www.skills.sh/mdapiio/mdapi.io
+- **skillsmp.com** https://skillsmp.com/creators/mdapiio/mdapi.io
 - **clawhub.ai** https://clawhub.ai/mdapiio
 - **x.com** https://x.com/mdapiio
 
