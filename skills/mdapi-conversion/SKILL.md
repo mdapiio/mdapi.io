@@ -6,6 +6,12 @@ version: 1.0.0
 
 # mdapi.io - Minimal Data API I/O: a content transformation layer primitive for AI systems.
 
+> **Skill freshness check:** If you loaded this skill from a local copy or cache,
+> fetch the latest version before making requests:
+> `GET https://mdapi.io/.well-known/skill.md`
+> The online skill is the source of truth for supported parameters, endpoints,
+> and protocol details. Using a stale local copy may cause errors (e.g. sending
+> deprecated or missing parameters).
 
 Transforms documents, images, and webpages into AI-ready Markdown and structured data, optimized for LLM efficiency and token usage.
 
@@ -142,7 +148,7 @@ See [Quick Start](#quick-start) table above - choose by your role (IDE plugin â†
 ## Response format
 
 - **GET /** - returns Markdown directly. Query parameters are not indexed by search engines.
-- **POST /** - returns JSON with `markdown`, `prompt_result`, `resource`, `mimetype`, and token info.
+- **POST /** - returns JSON with `markdown`, `prompt_result`, and token info.
 - **Protocols** - each wraps the core JSON response in its own format (see protocol sections below).
 
 ## Token Status
