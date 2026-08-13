@@ -171,7 +171,7 @@ curl "https://mdapi.io/?input=...&stream=true"
 
 Response format (OpenAI-compatible SSE, one JSON object per `data:` line):
 ```json
-data: {"type":"token_info","status":"valid","balance":99,"expires":1798761600,"resource":"https://example.com","mimetype":"text/html"}
+data: {"type":"token_info","status":"valid","balance":99,"expires":1798761600}
 data: {"choices":[{"index":0,"delta":{"content":" chunk"},"finish_reason":null}]}
 data: {"choices":[{"index":0,"delta":{"content":" more"},"finish_reason":null}]}
 data: {"choices":[{"index":0,"delta":{},"finish_reason":"stop"}]}
@@ -194,16 +194,16 @@ data: [DONE]
 
 ### Response Codes
 
-| Code | Description       | Response Body (GET)                      | Response Body (POST)                                                                    |
-| ---- | ----------------- | ---------------------------------------- | --------------------------------------------------------------------------------------- |
-| 200  | Success           | Markdown content                         | JSON with `success`, markdown, prompt_result, resource, mimetype, metrics, token fields |
-| 402  | Payment Required  | Markdown payment instructions            | JSON with `success:false` and payment object                                            |
-| 400  | Bad Request       | Markdown error (`# Error\n\n...`)        | JSON `{"success":false,"error":"..."}`                                                  |
-| 401  | Invalid Token     | Markdown error (`# Error\n\n...`)        | JSON `{"success":false,"error":"..."}`                                                  |
-| 404  | Not Found         | Markdown error (`# Error\n\n...`)        | JSON `{"success":false,"error":"..."}`                                                  |
-| 413  | Payload Too Large | Markdown error (`# Error\n\n...`)        | JSON `{"success":false,"error":"..."}`                                                  |
-| 429  | Rate Limited      | Markdown error (`# Error\n\n...`)        | JSON `{"success":false,"error":"..."}`                                                  |
-| 500  | Server Error      | Markdown error (`# Server Error\n\n...`) | JSON `{"success":false,"error":"..."}`                                                  |
+| Code | Description       | Response Body (GET)                      | Response Body (POST)                                                |
+| ---- | ----------------- | ---------------------------------------- | ------------------------------------------------------------------- |
+| 200  | Success           | Markdown content                         | JSON with `success`, markdown, prompt_result, metrics, token fields |
+| 402  | Payment Required  | Markdown payment instructions            | JSON with `success:false` and payment object                        |
+| 400  | Bad Request       | Markdown error (`# Error\n\n...`)        | JSON `{"success":false,"error":"..."}`                              |
+| 401  | Invalid Token     | Markdown error (`# Error\n\n...`)        | JSON `{"success":false,"error":"..."}`                              |
+| 404  | Not Found         | Markdown error (`# Error\n\n...`)        | JSON `{"success":false,"error":"..."}`                              |
+| 413  | Payload Too Large | Markdown error (`# Error\n\n...`)        | JSON `{"success":false,"error":"..."}`                              |
+| 429  | Rate Limited      | Markdown error (`# Error\n\n...`)        | JSON `{"success":false,"error":"..."}`                              |
+| 500  | Server Error      | Markdown error (`# Server Error\n\n...`) | JSON `{"success":false,"error":"..."}`                              |
 
 ### Token Status
 
@@ -295,7 +295,7 @@ The `/v1/chat/completions` endpoint provides an OpenAI‑compatible API for mark
 - Token and memo via headers (recommended for POST)
 - Streaming SSE responses (`stream: true`)
 - Custom instructions with LLM processing (system messages, or user messages containing instruction keywords such as *extract, summarize, analyze, format, convert to, write as, create, generate, json* → LLM-driven summary/extraction/transformation)
-- `prompt` for LLM-processed output. The response surfaces `prompt_result`, `resource`, and `mimetype` at the top level alongside the standard `choices[].message.content` (which carries `prompt_result` when prompt is set, otherwise the Markdown).
+- `prompt` for LLM-processed output. The response surfaces `prompt_result` at the top level alongside the standard `choices[].message.content` (which carries `prompt_result` when prompt is set, otherwise the Markdown).
 
 `model` is accepted but not required (any string; the service uses its own conversion pipeline, not a remote LLM chat model, unless custom instructions trigger LLM processing).
 
