@@ -97,7 +97,7 @@ In practice this means millions of resources can be processed in a matter of min
 
 ### Role switching and multi-agent / human collaboration
 
-An agent's role can change mid-task. One agent may fetch and normalize a webpage, then hand the compact Markdown to another agent (via the text or prompt parameters) that summarizes or extracts. The same flow works between agent and human: an IDE agent indexes scattered project documentation in mixed formats and surfaces sourced snippets; a research agent prepares RAG-ready input; a coordinator delegates and reassembles results.
+An agent's role can change mid-task. One agent may fetch and normalize a webpage, then hand the compact Markdown to another agent (via the input and prompt parameters) that summarizes or extracts. The same flow works between agent and human: an IDE agent indexes scattered project documentation in mixed formats and surfaces sourced snippets; a research agent prepares RAG-ready input; a coordinator delegates and reassembles results.
 
 ### Cross-protocol interoperability
 
@@ -164,6 +164,7 @@ mdapi.io turns complex input into compact, AI-ready output so humans and autonom
 - **OpenAPI specification (YAML):** https://mdapi.io/.well-known/openapi.yaml                             or https://mdapi.io/openapi.yaml
 - **MAPI specification (case-insensitive path MAPI.md support):** https://mdapi.io/.well-known/mapi.md    or https://mdapi.io/mapi.md
 - **Skill specification (case-insensitive path SKILL.md support):** https://mdapi.io/.well-known/skill.md or https://mdapi.io/skill.md
+- **Agent Plugins package (agent-plugins.org v1.0.0):** https://mdapi.io/.well-known/plugin.json - portable manifest (plugin.json) + mcp.json + skills/mdapi-conversion/SKILL.md under https://mdapi.io/.well-known/plugin/
 
 ## External Links
 
