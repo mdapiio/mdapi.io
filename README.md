@@ -14,13 +14,13 @@ Transforms documents, images, and webpages into AI-ready Markdown and structured
 
 Choose your entry point based on your role:
 
-| Role                                                  | Protocol                     | Endpoint                  | When to use                                                                                                  |
-| ----------------------------------------------------- | ---------------------------- | ------------------------- | ------------------------------------------------------------------------------------------------------------ |
-| IDE / coding agent (JetBrains, Cursor, VS Code, etc.) | ACP (Agent Client Protocol)  | POST /acp                 | You are an IDE plugin or coding agent. Use tools/call with convert tool.                                     |
-| AI agent (Claude Code, Codex, OpenClaw, Hermes, etc.) | A2A (Agent-to-Agent)         | POST /a2a                 | You are an autonomous agent. Use message/send with data in text parts. Supports streaming and task tracking. |
-| AI agent (any framework)                              | MCP (Model Context Protocol) | GET  /mcp + POST /mcp     | You need tool discovery. Use tools/call with convert tool.                                                   |
-| OpenAI-compatible client                              | OpenAI API                   | POST /v1/chat/completions | You already use OpenAI SDK. Pass URL/file in messages. Supports streaming.                                   |
-| Direct HTTP / curl / script                           | REST API                     | GET  / or POST /          | Simplest path. GET returns Markdown directly. POST returns JSON with metadata.                               |
+| Role                                                  | Protocol                     | Endpoint                  | When to use                                                                                                                              |
+| ----------------------------------------------------- | ---------------------------- | ------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------- |
+| IDE / coding agent (JetBrains, Cursor, VS Code, etc.) | ACP (Agent Client Protocol)  | POST /acp                 | You are an IDE plugin or coding agent. Use initialize + session/new + session/prompt (content arrives via session/update notifications). |
+| AI agent (Claude Code, Codex, OpenClaw, Hermes, etc.) | A2A (Agent-to-Agent)         | POST /a2a                 | You are an autonomous agent. Use SendMessage with data in text parts. Supports streaming and task tracking.                              |
+| AI agent (any framework)                              | MCP (Model Context Protocol) | GET /mcp + POST /mcp      | You need tool discovery. Use tools/call with convert tool.                                                                               |
+| OpenAI-compatible client                              | OpenAI API                   | POST /v1/chat/completions | You already use OpenAI SDK. Pass URL/file in messages. Supports streaming.                                                               |
+| Direct HTTP / curl / script                           | REST API                     | GET / or POST /           | Simplest path. GET returns Markdown directly. POST returns JSON with metadata.                                                           |
 
 ### Universal discovery
 
@@ -56,7 +56,7 @@ The `input` parameter is auto-detected by the core: URLs (starting with `http://
 Additional parameters (`prompt`, `result`, `stream`, `token`, `memo`) are orthogonal and may be combined with `input`.
 
 All five protocols expose the same `input` source and apply the same transformations, streaming, and prompt-driven processing - the only
-difference is the transport (REST query/JSON, MCP `tools/call`, ACP RPC, OpenAI `messages`, A2A `message.parts`).
+difference is the transport (REST query/JSON, MCP `tools/call`, ACP `session/prompt`, OpenAI `messages`, A2A `message.parts`).
 
 ## Limits
 
@@ -171,7 +171,7 @@ curl "https://mdapi.io/?input=...&stream=true"
 
 Response format (OpenAI-compatible SSE, one JSON object per `data:` line):
 ```json
-data: {"type":"token_info","status":"valid","balance":99,"expires":1798761600}
+data: {"type":"token_info","token_status":"valid","token_balance":0.99,"token_expires":1798761600}
 data: {"choices":[{"index":0,"delta":{"content":" chunk"},"finish_reason":null}]}
 data: {"choices":[{"index":0,"delta":{"content":" more"},"finish_reason":null}]}
 data: {"choices":[{"index":0,"delta":{},"finish_reason":"stop"}]}
@@ -185,7 +185,7 @@ data: [DONE]
 | REST     | OpenAI-compatible `choices/delta` frames                                                                                          |
 | OpenAI   | `chat.completion.chunk` (`choices/delta`)                                                                                         |
 | MCP      | `notifications/message` content chunks, then one final `tools/call` result frame                                                  |
-| ACP      | incremental JSON-RPC `result.content` text chunks, then a final full `result` frame                                               |
+| ACP      | `session/update` notification chunks (one stable `messageId` per turn), then a final response carrying only `stopReason`          |
 | A2A      | incremental `task.artifacts[].parts[].text` chunks (`TASK_STATE_WORKING`), then a final completed `task` (`TASK_STATE_COMPLETED`) |
 
 > **Note on MCP transport vs. the `stream` parameter.** The MCP manifest advertises `transport.type: "streamable-http"` - that is the MCP *transport*
@@ -194,16 +194,16 @@ data: [DONE]
 
 ### Response Codes
 
-| Code | Description       | Response Body (GET)                      | Response Body (POST)                                                |
-| ---- | ----------------- | ---------------------------------------- | ------------------------------------------------------------------- |
-| 200  | Success           | Markdown content                         | JSON with `success`, markdown, prompt_result, metrics, token fields |
-| 402  | Payment Required  | Markdown payment instructions            | JSON with `success:false` and payment object                        |
-| 400  | Bad Request       | Markdown error (`# Error\n\n...`)        | JSON `{"success":false,"error":"..."}`                              |
-| 401  | Invalid Token     | Markdown error (`# Error\n\n...`)        | JSON `{"success":false,"error":"..."}`                              |
-| 404  | Not Found         | Markdown error (`# Error\n\n...`)        | JSON `{"success":false,"error":"..."}`                              |
-| 413  | Payload Too Large | Markdown error (`# Error\n\n...`)        | JSON `{"success":false,"error":"..."}`                              |
-| 429  | Rate Limited      | Markdown error (`# Error\n\n...`)        | JSON `{"success":false,"error":"..."}`                              |
-| 500  | Server Error      | Markdown error (`# Server Error\n\n...`) | JSON `{"success":false,"error":"..."}`                              |
+| Code | Description       | Response Body (GET)                                              | Response Body (POST)                                                     |
+| ---- | ----------------- | ---------------------------------------------------------------- | ------------------------------------------------------------------------ |
+| 200  | Success           | Markdown content                                                 | JSON with `success`, markdown, prompt_result, metrics, token fields      |
+| 402  | Payment Required  | Markdown payment instructions (`X-Error-Code: payment_required`) | JSON with `success:false`, `code:"payment_required"`, and payment object |
+| 400  | Bad Request       | Markdown error + `X-Error-Code` header                           | JSON `{"success":false,"error":"...","code":"invalid_request"}`          |
+| 401  | Invalid Token     | Markdown error + `X-Error-Code` header                           | JSON `{"success":false,"error":"...","code":"unauthorized"}`             |
+| 404  | Not Found         | Markdown error + `X-Error-Code` header                           | JSON `{"success":false,"error":"...","code":"not_found"}`                |
+| 413  | Payload Too Large | Markdown error + `X-Error-Code` header                           | JSON `{"success":false,"error":"...","code":"too_large"}`                |
+| 429  | Rate Limited      | Markdown error + `X-Error-Code` header                           | JSON `{"success":false,"error":"...","code":"rate_limited"}`             |
+| 500  | Server Error      | Markdown error + `X-Error-Code` header                           | JSON `{"success":false,"error":"...","code":"server_error"}`             |
 
 ### Token Status
 
@@ -225,28 +225,35 @@ The X-Token-Status header (and token_status field in responses) indicates the cu
 
 ### Endpoints
 
-| Method | Path                                                 | Description                                                                 |
-| ------ | ---------------------------------------------------- | --------------------------------------------------------------------------- |
-| GET    | /about                                               | About service                                                               |
-| GET    | /                                                    | API docs or conversion (via query parameter: `input`, `prompt`, `result`)   |
-| POST   | /                                                    | Convert content via JSON body (supports `input`, `prompt`, `result` params) |
-| POST   | /v1/chat/completions                                 | OpenAI-compatible endpoint                                                  |
-| GET    | /mcp                                                 | MCP server manifest                                                         |
-| POST   | /mcp                                                 | MCP RPC endpoint (discover, tools, resources, subscriptions)                |
-| POST   | /acp                                                 | ACP RPC endpoint (IDE agents)                                               |
-| POST   | /a2a                                                 | A2A RPC endpoint (agent2agent)                                              |
-| GET    | /health                                              | Health check                                                                |
-| GET    | /llms.txt                                            | API documentation                                                           |
-| GET    | /llms-full.txt                                       | Full API documentation                                                      |
-| GET    | /.well-known/ai-discovery.json or /ai-discovery.json | AI discovery                                                                |
-| GET    | /.well-known/agent.json        or /agent.json        | AI Agent discovery                                                          |
-| GET    | /.well-known/agent-card.json   or /agent-card.json   | A2A Agent card                                                              |
-| GET    | /.well-known/acp.json          or /acp.json          | ACP manifest                                                                |
-| GET    | /.well-known/x402.json         or /x402.json         | x402 payment manifest                                                       |
-| GET    | /.well-known/openapi.json      or /openapi.json      | OpenAPI specification (JSON)                                                |
-| GET    | /.well-known/openapi.yaml      or /openapi.yaml      | OpenAPI specification (YAML)                                                |
-| GET    | /.well-known/mapi.md           or /mapi.md           | MAPI specification (case-insensitive path MAPI.md support)                  |
-| GET    | /.well-known/skill.md          or /skill.md          | Skill specification (case-insensitive path SKILL.md support)                |
+| Method | Path                                                        | Description                                                                 |
+| ------ | ----------------------------------------------------------- | --------------------------------------------------------------------------- |
+| GET    | /about                                                      | About service                                                               |
+| GET    | /                                                           | API docs or conversion (via query parameter: `input`, `prompt`, `result`)   |
+| POST   | /                                                           | Convert content via JSON body (supports `input`, `prompt`, `result` params) |
+| POST   | /v1/chat/completions                                        | OpenAI-compatible endpoint                                                  |
+| GET    | /mcp                                                        | MCP server manifest                                                         |
+| POST   | /mcp                                                        | MCP RPC endpoint (discover, tools, resources, subscriptions)                |
+| POST   | /acp                                                        | ACP RPC endpoint (IDE agents)                                               |
+| POST   | /a2a                                                        | A2A RPC endpoint (agent2agent)                                              |
+| GET    | /health                                                     | Health check                                                                |
+| GET    | /llms.txt                                                   | API documentation                                                           |
+| GET    | /llms-full.txt                                              | Full API documentation                                                      |
+| GET    | /.well-known/ai-discovery.json or /ai-discovery.json        | AI discovery                                                                |
+| GET    | /.well-known/agent.json or /agent.json                      | AI Agent discovery                                                          |
+| GET    | /.well-known/agent-card.json or /agent-card.json            | A2A Agent card                                                              |
+| GET    | /.well-known/acp.json or /acp.json                          | ACP manifest                                                                |
+| GET    | /.well-known/x402.json or /x402.json                        | x402 payment manifest                                                       |
+| GET    | /.well-known/openapi.json or /openapi.json                  | OpenAPI specification (JSON)                                                |
+| GET    | /.well-known/openapi.yaml or /openapi.yaml                  | OpenAPI specification (YAML)                                                |
+| GET    | /.well-known/mapi.md or /mapi.md                            | MAPI specification (case-insensitive path MAPI.md support)                  |
+| GET    | /.well-known/skill.md or /skill.md                          | Skill specification (case-insensitive path SKILL.md support)                |
+| GET    | /.well-known/skills/index.json                              | Legacy skills index                                                         |
+| GET    | /.well-known/agent-skills/index.json                        | Agent Skills discovery (v0.2.0)                                             |
+| GET    | /.well-known/api-catalog                                    | API catalog (linkset+json, RFC draft)                                       |
+| GET    | /.well-known/mcp/server-cards.json                          | MCP server cards index                                                      |
+| GET    | /.well-known/plugin/plugin.json or /.well-known/plugin.json | Agent Plugins v1.0.0 manifest                                               |
+| GET    | /.well-known/plugin/mcp.json                                | Agent Plugins MCP config                                                    |
+| GET    | /.well-known/plugin/skills/mdapi-conversion/SKILL.md        | Agent Plugins conversion skill                                              |
 
 #### Examples
 
@@ -261,10 +268,10 @@ curl "https://mdapi.io/?input=https://example.com&prompt=Summarize&result=both"
 curl "https://mdapi.io/?input=Hello World&prompt=Summarize"
 
 # Token activation via GET (activate and use)
-curl "https://mdapi.io/?input=https://example.com&token=YOUR_TOKEN&memo=YOUR_MEMO"
+curl -H "Authorization: Bearer YOUR_TOKEN" -H "X-Memo-Required: YOUR_MEMO" "https://mdapi.io/?input=https://example.com"
 
 # Paid request with token via GET (using token)
-curl "https://mdapi.io/?input=https://example.com&token=YOUR_TOKEN"
+curl -H "Authorization: Bearer YOUR_TOKEN" "https://mdapi.io/?input=https://example.com"
 
 # URL conversion via POST (free)
 curl -X POST -H "Content-Type: application/json" -d '{"input":"https://example.com"}' "https://mdapi.io/"
@@ -290,7 +297,7 @@ The `/v1/chat/completions` endpoint provides an OpenAI‑compatible API for mark
 **Supported features:**
 - URL extraction from message content (any text containing https?://)
 - image_url in messages (OpenAI format) - supports HTTP URLs and data URLs
-- file in messages (OpenAI format) - base64 encoded files (field `file.data`, `file.filename`, `file.mimeType`)
+- file in messages (OpenAI format) - base64 encoded files (field `file.data`, optional `file.mimeType`; built into a `data:` URI for the core — no `file.filename` required or used)
 - Direct text content in messages (any text without a URL is sent to the core as the `input` source and converted to Markdown)
 - Token and memo via headers (recommended for POST)
 - Streaming SSE responses (`stream: true`)
@@ -1018,7 +1025,7 @@ Or use JSON-RPC directly:
 {
   "jsonrpc": "2.0",
   "id": 1,
-  "method": "message/send",
+  "method": "SendMessage",
   "params": {
       "message": {
         "messageId": "msg-uuid-1",
@@ -1032,14 +1039,14 @@ Or use JSON-RPC directly:
 
 ### A2A Methods
 
-| Method            | Description                             |
-| ----------------- | --------------------------------------- |
-| message/send      | Send a message to initiate conversion   |
-| message/stream    | Send message with SSE streaming updates |
-| tasks/get         | Get task status and results by ID       |
-| tasks/list        | List tasks with optional filtering      |
-| tasks/cancel      | Cancel an in-progress task              |
-| tasks/resubscribe | Subscribe to task updates via SSE       |
+| Method               | Description                             |
+| -------------------- | --------------------------------------- |
+| SendMessage          | Send a message to initiate conversion   |
+| SendStreamingMessage | Send message with SSE streaming updates |
+| GetTask              | Get task status and results by ID       |
+| ListTasks            | List tasks with optional filtering      |
+| CancelTask           | Cancel an in-progress task              |
+| SubscribeToTask      | Subscribe to task updates via SSE       |
 
 > **Single source via `input`:** the `input` parameter in the message parts is the unified source - the same as the REST endpoint. A bare URL
 > inside a text part (e.g. `"Convert https://example.com"`) is extracted automatically and used as the conversion source, so you don't need to wrap it
@@ -1047,13 +1054,13 @@ Or use JSON-RPC directly:
 
 ### A2A Examples
 
-#### message/send
+#### SendMessage
 
 ```bash
 curl -X POST https://mdapi.io/a2a   -H "Content-Type: application/a2a+json"   -d '{
     "jsonrpc": "2.0",
     "id": 1,
-    "method": "message/send",
+    "method": "SendMessage",
     "params": {
       "message": {
         "messageId": "msg-uuid-1",
@@ -1065,13 +1072,13 @@ curl -X POST https://mdapi.io/a2a   -H "Content-Type: application/a2a+json"   -d
   }'
 ```
 
-#### message/send with file (data URI)
+#### SendMessage with file (data URI)
 
 ```bash
 curl -X POST https://mdapi.io/a2a   -H "Content-Type: application/a2a+json"   -d '{
     "jsonrpc": "2.0",
     "id": 2,
-    "method": "message/send",
+    "method": "SendMessage",
     "params": {
       "message": {
         "messageId": "msg-uuid-2",
@@ -1083,13 +1090,13 @@ curl -X POST https://mdapi.io/a2a   -H "Content-Type: application/a2a+json"   -d
   }'
 ```
 
-#### message/send with structured data
+#### SendMessage with structured data
 
 ```bash
 curl -X POST https://mdapi.io/a2a   -H "Content-Type: application/a2a+json"   -d '{
     "jsonrpc": "2.0",
     "id": 3,
-    "method": "message/send",
+    "method": "SendMessage",
     "params": {
       "message": {
         "messageId": "msg-uuid-3",
@@ -1113,7 +1120,7 @@ curl -X POST https://mdapi.io/a2a   -H "Content-Type: application/a2a+json"   -d
 curl -X POST https://mdapi.io/a2a   -H "Content-Type: application/a2a+json"   -d '{
     "jsonrpc": "2.0",
     "id": 7,
-    "method": "message/send",
+    "method": "SendMessage",
     "params": {
       "message": {
         "messageId": "msg-uuid-7",
@@ -1140,7 +1147,7 @@ curl -X POST https://mdapi.io/a2a   -H "Content-Type: application/a2a+json"   -d
 curl -X POST https://mdapi.io/a2a   -H "Content-Type: application/a2a+json"   -d '{
     "jsonrpc": "2.0",
     "id": 4,
-    "method": "message/send",
+    "method": "SendMessage",
     "params": {
       "contextId": "ctx-uuid-1",
       "message": {
@@ -1153,24 +1160,24 @@ curl -X POST https://mdapi.io/a2a   -H "Content-Type: application/a2a+json"   -d
   }'
 ```
 
-#### tasks/get
+#### GetTask
 
 ```bash
 curl -X POST https://mdapi.io/a2a   -H "Content-Type: application/a2a+json"   -d '{
     "jsonrpc": "2.0",
     "id": 5,
-    "method": "tasks/get",
+    "method": "GetTask",
     "params": { "id": "task_12345" }
   }'
 ```
 
-#### tasks/list
+#### ListTasks
 
 ```bash
 curl -X POST https://mdapi.io/a2a   -H "Content-Type: application/a2a+json"   -d '{
     "jsonrpc": "2.0",
     "id": 6,
-    "method": "tasks/list",
+    "method": "ListTasks",
     "params": { "contextId": "ctx_12345", "pageSize": 10 }
   }'
 ```
@@ -1179,11 +1186,12 @@ curl -X POST https://mdapi.io/a2a   -H "Content-Type: application/a2a+json"   -d
 
 Messages use the A2A `Part` format (field-name discriminators per spec v1.0.0):
 
-| Type   | Description                               | Fields                                  |
-| ------ | ----------------------------------------- | --------------------------------------- |
-| `text` | Plain text content or JSON-encoded params | `text`                                  |
-| `data` | Structured JSON data (core params)        | `data` (object), `mediaType` (optional) |
-| `url`  | URL to fetch and convert                  | `url` (http/https)                      |
+| Type   | Description                                                                                           | Fields                                  |
+| ------ | ----------------------------------------------------------------------------------------------------- | --------------------------------------- |
+| `text` | Plain text content or JSON-encoded params                                                             | `text`                                  |
+| `raw`  | File content as base64 bytes; normalized to a data URI (`data:<mediaType>;base64,<raw>`) for the core | `raw` (base64), `mediaType` (optional)  |
+| `data` | Structured JSON data (core params)                                                                    | `data` (object), `mediaType` (optional) |
+| `url`  | URL to fetch and convert                                                                              | `url` (http/https)                      |
 
 **Part → Core Parameter Mapping:**
 - `text` Part → `input` param (direct content) or JSON-encoded params (`{ "input": "...", "prompt": "..." }`)
@@ -1209,7 +1217,7 @@ interface Task {
   id: string;                         // "task_<timestamp>_<random>"
   contextId: string;                  // "ctx_<timestamp>_<random>"
   status: {
-    state: string;                    // "working" | "completed" | "failed" | "canceled" | "rejected"
+    state: string;                    // "TASK_STATE_WORKING" | "TASK_STATE_COMPLETED" | "TASK_STATE_FAILED" | "TASK_STATE_CANCELED" | "TASK_STATE_REJECTED"
     timestamp: string;                // ISO 8601
     message?: Message;                // only on failure
   };
@@ -1224,13 +1232,13 @@ interface Task {
 
 ### Task States
 
-| State       | Description                   |
-| ----------- | ----------------------------- |
-| `working`   | Task is being processed       |
-| `completed` | Task finished successfully    |
-| `failed`    | Task failed during processing |
-| `canceled`  | Task was canceled by client   |
-| `rejected`  | Task was rejected by server   |
+| State                  | Description                   |
+| ---------------------- | ----------------------------- |
+| `TASK_STATE_WORKING`   | Task is being processed       |
+| `TASK_STATE_COMPLETED` | Task finished successfully    |
+| `TASK_STATE_FAILED`    | Task failed during processing |
+| `TASK_STATE_CANCELED`  | Task was canceled by client   |
+| `TASK_STATE_REJECTED`  | Task was rejected by server   |
 
 ### Error Responses
 
@@ -1272,13 +1280,13 @@ Unsupported media type is returned as HTTP **415** (not a JSON-RPC error code).
 
 ### Streaming
 
-Use `message/stream` for real-time SSE updates:
+Use `SendStreamingMessage` for real-time SSE updates:
 
 ```bash
 curl -X POST https://mdapi.io/a2a   -H "Content-Type: application/a2a+json"   -H "Accept: text/event-stream"   -d '{
     "jsonrpc": "2.0",
     "id": 5,
-    "method": "message/stream",
+    "method": "SendStreamingMessage",
     "params": {
       "message": {
         "messageId": "msg-uuid-5",
@@ -1290,12 +1298,12 @@ curl -X POST https://mdapi.io/a2a   -H "Content-Type: application/a2a+json"   -H
   }'
 ```
 
-Response format (real content stream; intermediate `working` chunks, then the final completed `task`):
+Response format (real content stream; intermediate `TASK_STATE_WORKING` chunks, then the final TASK_STATE_COMPLETED `task`):
 
 ```
-data: {"jsonrpc":"2.0","id":5,"result":{"task":{"id":"task_...","contextId":"ctx_...","status":{"state":"working"},"artifacts":[{"artifactId":"artifact_...","name":"conversion_result","parts":[{"text":" partial "}]}]}}}
-data: {"jsonrpc":"2.0","id":5,"result":{"task":{"id":"task_...","contextId":"ctx_...","status":{"state":"working"},"artifacts":[{"artifactId":"artifact_...","name":"conversion_result","parts":[{"text":" more "}]}]}}}
-data: {"jsonrpc":"2.0","id":5,"result":{"task":{"id":"task_...","contextId":"ctx_...","status":{"state":"completed"},"artifacts":[{"artifactId":"artifact_...","name":"conversion_result","parts":[{"text":"<full converted content>"}]}]}}}
+data: {"jsonrpc":"2.0","id":5,"result":{"task":{"id":"task_...","contextId":"ctx_...","status":{"state":"TASK_STATE_WORKING"},"artifacts":[{"artifactId":"artifact_...","name":"conversion_result","parts":[{"text":" partial "}]}]}}}
+data: {"jsonrpc":"2.0","id":5,"result":{"task":{"id":"task_...","contextId":"ctx_...","status":{"state":"TASK_STATE_WORKING"},"artifacts":[{"artifactId":"artifact_...","name":"conversion_result","parts":[{"text":" more "}]}]}}}
+data: {"jsonrpc":"2.0","id":5,"result":{"task":{"id":"task_...","contextId":"ctx_...","status":{"state":"TASK_STATE_COMPLETED"},"artifacts":[{"artifactId":"artifact_...","name":"conversion_result","parts":[{"text":"<full converted content>"}]}]}}}
 data: [DONE]
 ```
 
@@ -1307,7 +1315,7 @@ Subscribe to an existing task for real-time updates:
 curl -X POST https://mdapi.io/a2a   -H "Content-Type: application/a2a+json"   -H "Accept: text/event-stream"   -d '{
     "jsonrpc": "2.0",
     "id": 6,
-    "method": "tasks/resubscribe",
+    "method": "SubscribeToTask",
     "params": { "id": "task_12345" }
   }'
 ```
@@ -1320,7 +1328,7 @@ Cancel an in-progress task:
 curl -X POST https://mdapi.io/a2a   -H "Content-Type: application/a2a+json"   -d '{
     "jsonrpc": "2.0",
     "id": 7,
-    "method": "tasks/cancel",
+    "method": "CancelTask",
     "params": { "id": "task_12345" }
   }'
 ```
@@ -1334,7 +1342,7 @@ Response:
     "id": "task_12345",
     "contextId": "ctx_...",
     "status": {
-      "state": "canceled",
+      "state": "TASK_STATE_CANCELED",
       "timestamp": "2026-06-26T16:00:00.000Z"
     }
   }
@@ -1343,9 +1351,9 @@ Response:
 
 ## ACP Configuration
 
-Connect mdapi.io to your IDE or coding agent (JetBrains, Cursor, VS Code, etc.) via the Agent Client Protocol. ACP is a JSON-RPC 2.0 endpoint at `POST /acp`.
+Connect mdapi.io to your IDE or coding agent (JetBrains, Cursor, VS Code, etc.) via the Agent Client Protocol v1.0.0. ACP is a JSON-RPC 2.0 endpoint at `POST /acp`. Its native surface is **session/turn**: create an ephemeral session, then send a prompt — the converted content streams back as `session/update` notifications.
 
-> **Single source via `input`:** the `convert` tool accepts a unified `input` parameter - the same source as every other protocol. The core auto-detects whether the value is a URL, data URI, or text.
+> **Single source via `input`:** each `session/prompt` carries a unified `input` — the same source as every other protocol. The core auto-detects whether the value is a URL, data URI, or text.
 > See [Source Parameters (all protocols)](#source-parameters-all-protocols).
 
 ### Basic Configuration
@@ -1362,143 +1370,101 @@ Add to your ACP client configuration (IDE plugin / agent settings):
 }
 ```
 
-Or call the JSON-RPC endpoint directly with `POST /acp` (Content-Type: `application/json`):
+Or call the JSON-RPC endpoint directly with `POST /acp` (Content-Type: `application/json`). Sessions are **stateless and ephemeral** — nothing is persisted server-side, so each `session/prompt` runs as an independent conversion:
 
 ```bash
+# 1. Create a session
 curl -X POST https://mdapi.io/acp \
   -H "Content-Type: application/json" \
-  -d '{
-    "jsonrpc": "2.0",
-    "id": 1,
-    "method": "tools/call",
-    "params": {
-      "name": "convert",
-      "arguments": {
-        "input": "https://example.com"
-      }
-    }
-  }'
+  -d '{"jsonrpc":"2.0","id":1,"method":"session/new","params":{}}'
+
+# 2. Send a prompt (content streams back as session/update notifications)
+curl -X POST https://mdapi.io/acp \
+  -H "Content-Type: application/json" \
+  -d '{"jsonrpc":"2.0","id":2,"method":"session/prompt","params":{
+    "sessionId":"<sessionId from session/new>",
+    "prompt":[{"type":"text","text":"<instructions>"},
+              {"type":"resource_link","uri":"https://example.com"}]
+  }}'
 ```
 
 > **Note:** `GET /acp` is not supported (ACP is POST-only). A free tier is available without a token.
 
 ### ACP Methods
 
-| Method           | Description                               |
-| ---------------- | ----------------------------------------- |
-| `tools/list`     | List available tools (includes `convert`) |
-| `tools/call`     | Call the `convert` tool                   |
-| `resources/list` | List available discovery resources        |
-| `resources/read` | Read a discovery resource by URI          |
+| Method           | Description                                                                   |
+| ---------------- | ----------------------------------------------------------------------------- |
+| `initialize`     | Handshake: return protocol version, agent capabilities, and agent info        |
+| `session/new`    | Create an ephemeral, stateless session (returns a `sessionId`)                |
+| `session/prompt` | Run a conversion turn; content streams back as `session/update` notifications |
+| `session/cancel` | Best-effort cancel of an in-flight turn                                       |
 
-### ACP Tool Examples
+### ACP Session Examples
 
-**URL conversion:**
+**URL conversion (instructions + `resource_link`):**
 
 ```json
 {
   "jsonrpc": "2.0",
   "id": 1,
-  "method": "tools/call",
+  "method": "session/prompt",
   "params": {
-    "name": "convert",
-    "arguments": {
-      "input": "https://example.com",
-      "prompt": "Summarize",
-      "result": "both",
-      "stream": true
-    }
+    "sessionId": "<sessionId>",
+    "prompt": [
+      { "type": "text", "text": "Summarize" },
+      { "type": "resource_link", "uri": "https://example.com" }
+    ]
   }
 }
 ```
 
-**Text conversion (prompt result):**
+**Text conversion (a bare `text` block becomes the input):**
 
 ```json
 {
   "jsonrpc": "2.0",
   "id": 2,
-  "method": "tools/call",
+  "method": "session/prompt",
   "params": {
-    "name": "convert",
-    "arguments": {
-      "input": "Hello World",
-      "prompt": "Extract key points",
-      "result": "prompt",
-      "stream": false
-    }
+    "sessionId": "<sessionId>",
+    "prompt": [{ "type": "text", "text": "Hello World" }]
   }
 }
 ```
 
-**File conversion (data URI - auto-detected):**
+**File conversion (a `data:` URI in a `text` block is auto-detected as a file):**
 
 ```json
 {
   "jsonrpc": "2.0",
   "id": 3,
-  "method": "tools/call",
+  "method": "session/prompt",
   "params": {
-    "name": "convert",
-    "arguments": {
-      "input": "data:text/plain;base64,SGVsbG8gV29ybGQ=",
-      "prompt": "Extract the title",
-      "result": "markdown",
-      "stream": true
-    }
+    "sessionId": "<sessionId>",
+    "prompt": [
+      { "type": "text", "text": "Extract the title" },
+      { "type": "text", "text": "data:text/plain;base64,SGVsbG8gV29ybGQ=" }
+    ]
   }
 }
 ```
 
-**Token activation (first request only):**
-
-```json
-{
-  "jsonrpc": "2.0",
-  "id": 4,
-  "method": "tools/call",
-  "params": {
-    "name": "convert",
-    "arguments": {
-      "input": "https://example.com",
-      "token": "YOUR_NEW_TOKEN",
-      "memo": "YOUR_PAYMENT_MEMO"
-    }
-  }
-}
-```
+**Token activation (first request only):** every protocol passes the token per-call. Include it on any method's `params` as a `token` (+ `memo` on first use) — ACP does not use a session-level authenticate exchange.
 
 ### ACP Response Format
 
-ACP returns a JSON-RPC 2.0 result with a `content` array. The `convert` tool maps the unified core response so Markdown, the prompt result, and the source resource all surface as content items:
-
-```json
-{
-  "jsonrpc": "2.0",
-  "id": 1,
-  "result": {
-    "content": [
-      { "type": "text", "text": "<converted Markdown>" },
-      { "type": "text", "text": "<prompt_result, when result=prompt|both>" },
-      { "type": "resource_link", "uri": "https://example.com", "name": "https://example.com" }
-    ],
-    "isError": false
-  }
-}
-```
-
-- `content[]` holds `text` items for `markdown` and `prompt_result`, plus a `resource_link` when the source is a URL.
-- `isError` is `true` only when the underlying conversion failed (non-200 or `success: false`).
-- When `stream: true`, the response is delivered as SSE chunks instead of a single JSON object. Each chunk is a JSON-RPC `result` with an incremental `content` text item, followed by a final full `result` frame (see [Streaming Parameter](#streaming-parameter)):
+Content is delivered **exclusively via `session/update` notifications**; the final `session/prompt` result carries only the `stopReason` (`PromptResponse`). A successful turn looks like this SSE stream:
 
 ```
-data: {"jsonrpc":"2.0","id":3,"result":{"content":[{"type":"text","text":" partial "}],"isError":false}}
-data: {"jsonrpc":"2.0","id":3,"result":{"content":[{"type":"text","text":" more "}],"isError":false}}
-data: {"jsonrpc":"2.0","id":3,"result":{"content":[{"type":"text","text":"<full converted content>"}],"isError":false}}
+data: {"jsonrpc":"2.0","method":"session/update","params":{"sessionId":"<sessionId>","update":[{"content":{"type":"text","text":"<converted content>"},"messageId":"<messageId>"}]}}
+data: {"jsonrpc":"2.0","id":1,"result":{"stopReason":"end_turn"}}
 data: [DONE]
 ```
 
-- Token status (`X-Token-Balance`, `X-Token-Expires`, `X-Token-Status`) is proxied from the core into both the response body and headers.
+- The `session/update` `update[]` array holds the content chunks; `messageId` is stable across all chunks of a single turn.
+- **Streaming:** add `"stream": true` to the `session/prompt` `params` to stream the conversion live — each content chunk arrives as its own `session/update` notification (same `messageId`), then the `PromptResponse`. Without it, the whole turn arrives as one buffered `session/update` notification. Streaming is inherent to ACP; content only ever rides notifications.
+- A failed conversion streams an explanatory `session/update`, then ends with `stopReason: "error"`. `session/cancel` ends the turn with `stopReason: "cancel"`.
+- Token status (`X-Token-Balance`, `X-Token-Expires`, `X-Token-Status`) is proxied from the core into the response headers.
 
 ## Usage scenarios
 
@@ -1530,6 +1496,7 @@ See https://mdapi.io/about for the full scenario walkthrough.
 - **OpenAPI specification (YAML):** https://mdapi.io/.well-known/openapi.yaml                             or https://mdapi.io/openapi.yaml
 - **MAPI specification (case-insensitive path MAPI.md support):** https://mdapi.io/.well-known/mapi.md    or https://mdapi.io/mapi.md
 - **Skill specification (case-insensitive path SKILL.md support):** https://mdapi.io/.well-known/skill.md or https://mdapi.io/skill.md
+- **Agent Plugins package (agent-plugins.org v1.0.0):** https://mdapi.io/.well-known/plugin.json - portable manifest (plugin.json) + mcp.json + skills/mdapi-conversion/SKILL.md under https://mdapi.io/.well-known/plugin/
 
 ## External Links
 
