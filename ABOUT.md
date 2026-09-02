@@ -87,11 +87,11 @@ mdapi.io is a minimal, self-documenting service-transport primitive. Because eve
 
 Each request is handled by a stateless, automatically-scaled execution environment, so the service scales horizontally - the more agents that call it, the more it parallelizes. An orchestrator can fan work out across a swarm of agents, and the swarm processes very large batches of distinct resources in parallel. Because every protocol converges on the same core, agents can cooperate directly and hand compact intermediate results to one another.
 
-In practice this means millions of resources can be processed in a matter of minutes, not hours - the practical ceiling is set by how widely the orchestrator distributes the work, not by the service itself. Different users may freely access the same resource; each user simply stays within their own fair-use allowance.
+In practice this means large batches of distinct resources can be processed in parallel - the practical ceiling is set by how widely the orchestrator distributes the work rather than by the service itself (each stateless instance scales horizontally). Volume is bounded by the per-user fair-use rates (10000 requests/hour per user, paid tokens decrement per conversion at $0.01/request). Different users may freely access the same resource; each user simply stays within their own allowance.
 
 ### Shared vs individual payment
 
-- **Shared token** - the orchestrator pays once, activates a token for the needed volume, and hands it to the whole swarm. This batches on-chain activity and reduces blockchain load.
+- **Shared token** - the orchestrator pays once, activates a token with a prepaid balance, and hands it to the whole swarm; each conversion decrements the balance. This batches on-chain activity and reduces blockchain load.
 - **Individual tokens** - each agent pays for its own work, activating exactly the volume it received (e.g. 166 resources → pay for 166 upfront).
 - If a wallet is missing or underfunded, the agent drops into **human-in-the-loop** mode: it returns payment details and a QR code, the human pays from a mobile device, and the agent resumes automatically on confirmation.
 
