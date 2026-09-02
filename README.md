@@ -180,13 +180,13 @@ data: [DONE]
 
 **Native streaming per protocol.** Every protocol delivers a *real* content stream when `stream: true`, but each emits it in its own native frame format (so existing clients keep working):
 
-| Protocol | Streaming frame format                                                                                                            |
-| -------- | --------------------------------------------------------------------------------------------------------------------------------- |
-| REST     | OpenAI-compatible `choices/delta` frames                                                                                          |
-| OpenAI   | `chat.completion.chunk` (`choices/delta`)                                                                                         |
-| MCP      | `notifications/message` content chunks, then one final `tools/call` result frame                                                  |
-| ACP      | `session/update` notification chunks (one stable `messageId` per turn), then a final response carrying only `stopReason`          |
-| A2A      | incremental `task.artifacts[].parts[].text` chunks (`TASK_STATE_WORKING`), then a final completed `task` (`TASK_STATE_COMPLETED`) |
+| Protocol | Streaming frame format                                                                                                                                                                          |
+| -------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| REST     | OpenAI-compatible `choices/delta` frames                                                                                                                                                        |
+| OpenAI   | `chat.completion.chunk` (`choices/delta`)                                                                                                                                                       |
+| MCP      | `notifications/message` content chunks, then one final `tools/call` result frame                                                                                                                |
+| ACP      | `session/update` notification chunks (one stable `messageId` per turn), then a final response carrying only `stopReason`                                                                        |
+| A2A      | `result.task` (`TASK_STATE_WORKING`) start frame, `result.artifactUpdate` (`{artifact, append, lastChunk}`) content frames, then `result.statusUpdate` (`TASK_STATE_COMPLETED`) - stream closes |
 
 > **Note on MCP transport vs. the `stream` parameter.** The MCP manifest advertises `transport.type: "streamable-http"` - that is the MCP *transport*
 > (how JSON-RPC requests are delivered to `POST /mcp`). It is unrelated to the `stream` *parameter*, which independently enables SSE streaming of the
@@ -297,7 +297,7 @@ The `/v1/chat/completions` endpoint provides an OpenAI‑compatible API for mark
 **Supported features:**
 - URL extraction from message content (any text containing https?://)
 - image_url in messages (OpenAI format) - supports HTTP URLs and data URLs
-- file in messages (OpenAI format) - base64 encoded files (field `file.data`, optional `file.mimeType`; built into a `data:` URI for the core — no `file.filename` required or used)
+- file in messages (OpenAI format) - base64 encoded files (field `file.data`, optional `file.mimeType`; built into a `data:` URI for the core - no `file.filename` required or used)
 - Direct text content in messages (any text without a URL is sent to the core as the `input` source and converted to Markdown)
 - Token and memo via headers (recommended for POST)
 - Streaming SSE responses (`stream: true`)
@@ -367,7 +367,7 @@ Connect mdapi.io to your MCP-compatible client (spec 2026-07-28, stateless).
 ### Protocol Requirements
 
 - **Transport:** Streamable HTTP (POST-only for JSON-RPC, GET for manifest)
-- **Required headers:** `MCP-Protocol-Version: 2026-07-28`, `Mcp-Method`, `Mcp-Name`
+- **Required headers:** `MCP-Protocol-Version: 2026-07-28` and `Mcp-Method` on every request; `Mcp-Name` additionally on `tools/call`, `resources/read`, and `prompts/get`
 - **Stateless:** No sessions - every request is independent
 - **Discovery:** Use `server/discover` to query server capabilities and supported versions
 
@@ -1244,14 +1244,13 @@ interface Task {
 
 A2A uses JSON-RPC 2.0 error format with A2A-specific error codes:
 
-| Code     | Error               | Description                                                |
-| -------- | ------------------- | ---------------------------------------------------------- |
-| `-32700` | Parse error         | Invalid JSON payload                                       |
-| `-32600` | Invalid Request     | Missing required fields (message.parts, message.messageId) |
-| `-32601` | Method not found    | Unknown A2A method                                         |
-| `-32001` | Task not found      | Task ID does not exist                                     |
-| `-32002` | Task not cancelable | Task in terminal state                                     |
-| `-32003` | Cannot subscribe    | Task in terminal state                                     |
+| Code     | Error                             | Description                                                |
+| -------- | --------------------------------- | ---------------------------------------------------------- |
+| `-32700` | Parse error                       | Invalid JSON payload                                       |
+| `-32600` | Invalid Request                   | Missing required fields (message.parts, message.messageId) |
+| `-32601` | Method not found                  | Unknown A2A method                                         |
+| `-32001` | Task not found                    | Task ID does not exist                                     |
+| `-32002` | Task is not in a cancelable state | CancelTask on a terminal task                              |
 
 Unsupported media type is returned as HTTP **415** (not a JSON-RPC error code).
 
@@ -1298,14 +1297,20 @@ curl -X POST https://mdapi.io/a2a   -H "Content-Type: application/a2a+json"   -H
   }'
 ```
 
-Response format (real content stream; intermediate `TASK_STATE_WORKING` chunks, then the final TASK_STATE_COMPLETED `task`):
+Response format (A2A v1.0.0 streaming sequence - exact frames the service emits):
 
 ```
-data: {"jsonrpc":"2.0","id":5,"result":{"task":{"id":"task_...","contextId":"ctx_...","status":{"state":"TASK_STATE_WORKING"},"artifacts":[{"artifactId":"artifact_...","name":"conversion_result","parts":[{"text":" partial "}]}]}}}
-data: {"jsonrpc":"2.0","id":5,"result":{"task":{"id":"task_...","contextId":"ctx_...","status":{"state":"TASK_STATE_WORKING"},"artifacts":[{"artifactId":"artifact_...","name":"conversion_result","parts":[{"text":" more "}]}]}}}
-data: {"jsonrpc":"2.0","id":5,"result":{"task":{"id":"task_...","contextId":"ctx_...","status":{"state":"TASK_STATE_COMPLETED"},"artifacts":[{"artifactId":"artifact_...","name":"conversion_result","parts":[{"text":"<full converted content>"}]}]}}}
+data: {"jsonrpc":"2.0","id":5,"result":{"task":{"id":"task_...","contextId":"ctx_...","status":{"state":"TASK_STATE_WORKING","timestamp":"..."},"artifacts":[]}}}
+data: {"jsonrpc":"2.0","id":5,"result":{"artifactUpdate":{"taskId":"task_...","contextId":"ctx_...","artifact":{"artifactId":"artifact_...","name":"conversion_result","parts":[{"text":" partial "}]},"append":true,"lastChunk":false}}}
+data: {"jsonrpc":"2.0","id":5,"result":{"artifactUpdate":{"taskId":"task_...","contextId":"ctx_...","artifact":{"artifactId":"artifact_...","name":"conversion_result","parts":[{"text":" more "}]},"append":true,"lastChunk":true}}}
+data: {"jsonrpc":"2.0","id":5,"result":{"statusUpdate":{"taskId":"task_...","contextId":"ctx_...","status":{"state":"TASK_STATE_COMPLETED","timestamp":"..."}}}}
 data: [DONE]
 ```
+
+The first frame carries the full `task` in TASK_STATE_WORKING; content streams as
+`artifactUpdate` frames (`lastChunk: true` on the final chunk); `statusUpdate` closes the stream with
+the terminal TASK_STATE_COMPLETED state. The persisted task (via `GetTask`) carries the real
+`artifacts[].parts[]` content.
 
 ### Subscribe to Task
 
@@ -1351,9 +1356,9 @@ Response:
 
 ## ACP Configuration
 
-Connect mdapi.io to your IDE or coding agent (JetBrains, Cursor, VS Code, etc.) via the Agent Client Protocol v1.0.0. ACP is a JSON-RPC 2.0 endpoint at `POST /acp`. Its native surface is **session/turn**: create an ephemeral session, then send a prompt — the converted content streams back as `session/update` notifications.
+Connect mdapi.io to your IDE or coding agent (JetBrains, Cursor, VS Code, etc.) via the Agent Client Protocol v1.0.0. ACP is a JSON-RPC 2.0 endpoint at `POST /acp`. Its native surface is **session/turn**: create an ephemeral session, then send a prompt - the converted content streams back as `session/update` notifications.
 
-> **Single source via `input`:** each `session/prompt` carries a unified `input` — the same source as every other protocol. The core auto-detects whether the value is a URL, data URI, or text.
+> **Single source via `input`:** each `session/prompt` carries a unified `input` - the same source as every other protocol. The core auto-detects whether the value is a URL, data URI, or text.
 > See [Source Parameters (all protocols)](#source-parameters-all-protocols).
 
 ### Basic Configuration
@@ -1370,7 +1375,7 @@ Add to your ACP client configuration (IDE plugin / agent settings):
 }
 ```
 
-Or call the JSON-RPC endpoint directly with `POST /acp` (Content-Type: `application/json`). Sessions are **stateless and ephemeral** — nothing is persisted server-side, so each `session/prompt` runs as an independent conversion:
+Or call the JSON-RPC endpoint directly with `POST /acp` (Content-Type: `application/json`). Sessions are **stateless and ephemeral** - nothing is persisted server-side, so each `session/prompt` runs as an independent conversion:
 
 ```bash
 # 1. Create a session
@@ -1392,12 +1397,12 @@ curl -X POST https://mdapi.io/acp \
 
 ### ACP Methods
 
-| Method           | Description                                                                   |
-| ---------------- | ----------------------------------------------------------------------------- |
-| `initialize`     | Handshake: return protocol version, agent capabilities, and agent info        |
-| `session/new`    | Create an ephemeral, stateless session (returns a `sessionId`)                |
-| `session/prompt` | Run a conversion turn; content streams back as `session/update` notifications |
-| `session/cancel` | Best-effort cancel of an in-flight turn                                       |
+| Method           | Description                                                                     |
+| ---------------- | ------------------------------------------------------------------------------- |
+| `initialize`     | Handshake: return protocol version, agent capabilities, and agent info          |
+| `session/new`    | Create an ephemeral, stateless session (returns a `sessionId`)                  |
+| `session/prompt` | Run a conversion turn; content streams back as `session/update` notifications   |
+| `session/cancel` | Notification (204, no response body) that best-effort cancels an in-flight turn |
 
 ### ACP Session Examples
 
@@ -1449,7 +1454,7 @@ curl -X POST https://mdapi.io/acp \
 }
 ```
 
-**Token activation (first request only):** every protocol passes the token per-call. Include it on any method's `params` as a `token` (+ `memo` on first use) — ACP does not use a session-level authenticate exchange.
+**Token activation (first request only):** every protocol passes the token per-call. Include it on any method's `params` as a `token` (+ `memo` on first use) - ACP does not use a session-level authenticate exchange.
 
 ### ACP Response Format
 
@@ -1462,8 +1467,8 @@ data: [DONE]
 ```
 
 - The `session/update` `update[]` array holds the content chunks; `messageId` is stable across all chunks of a single turn.
-- **Streaming:** add `"stream": true` to the `session/prompt` `params` to stream the conversion live — each content chunk arrives as its own `session/update` notification (same `messageId`), then the `PromptResponse`. Without it, the whole turn arrives as one buffered `session/update` notification. Streaming is inherent to ACP; content only ever rides notifications.
-- A failed conversion streams an explanatory `session/update`, then ends with `stopReason: "error"`. `session/cancel` ends the turn with `stopReason: "cancel"`.
+- **Streaming:** add `"stream": true` to the `session/prompt` `params` to stream the conversion live - each content chunk arrives as its own `session/update` notification (same `messageId`), then the `PromptResponse`. Without it, the whole turn arrives as one buffered `session/update` notification. Streaming is inherent to ACP; content only ever rides notifications.
+- A failed conversion streams an explanatory `session/update`, then ends with `stopReason: "error"`. `session/cancel` is a client→agent notification - the agent acknowledges it with HTTP 204 and no body.
 - Token status (`X-Token-Balance`, `X-Token-Expires`, `X-Token-Status`) is proxied from the core into the response headers.
 
 ## Usage scenarios
