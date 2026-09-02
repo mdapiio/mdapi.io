@@ -449,13 +449,13 @@ Note: `result=both` streams markdown first, then prompt_result after.
 Every protocol delivers a *real* content stream when `stream: true`, but each
 emits it in its own native frame format:
 
-| Protocol | Streaming frame format                                                                                                            |
-| -------- | --------------------------------------------------------------------------------------------------------------------------------- |
-| REST     | OpenAI-compatible `choices/delta` frames                                                                                          |
-| OpenAI   | `chat.completion.chunk` (`choices/delta`)                                                                                         |
-| MCP      | `notifications/message` content chunks, then one final `tools/call` result frame                                                  |
-| ACP      | `session/update` notification chunks (one stable `messageId` per turn), then a final response carrying only `stopReason`          |
-| A2A      | incremental `task.artifacts[].parts[].text` chunks (`TASK_STATE_WORKING`), then a final completed `task` (`TASK_STATE_COMPLETED`) |
+| Protocol | Streaming frame format                                                                                                                                                                          |
+| -------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| REST     | OpenAI-compatible `choices/delta` frames                                                                                                                                                        |
+| OpenAI   | `chat.completion.chunk` (`choices/delta`)                                                                                                                                                       |
+| MCP      | `notifications/message` content chunks, then one final `tools/call` result frame                                                                                                                |
+| ACP      | `session/update` notification chunks (one stable `messageId` per turn), then a final response carrying only `stopReason`                                                                        |
+| A2A      | `result.task` (`TASK_STATE_WORKING`) start frame, `result.artifactUpdate` (`{artifact, append, lastChunk}`) content frames, then `result.statusUpdate` (`TASK_STATE_COMPLETED`) - stream closes |
 
 ## OpenAI-compatible endpoint
 
@@ -546,13 +546,15 @@ Example flow (create a session, then send a prompt):
 
 Content streams back as `session/update` notifications; the final result carries `stopReason`.
 
-> **Note:** ACP does not use HTTP-level Authorization headers. The token is passed per-call (e.g. on the `session/prompt` params) — ACP v1.0.0 has no session-level authenticate exchange.
+> **Note:** ACP does not use HTTP-level Authorization headers. The token is passed per-call (e.g. on the `session/prompt` params) - ACP v1.0.0 has no session-level authenticate exchange.
 
 Supported methods:
 - `initialize` - handshake (protocol version, capabilities, agent info)
 - `session/new` - create an ephemeral session
 - `session/prompt` - run a conversion turn (content via `session/update` notifications)
-- `session/cancel` - best-effort cancel of an in-flight turn
+
+Notifications:
+- `session/cancel` - client→agent notification (204, no response body) that best-effort cancels an in-flight turn
 
 ### A2A Integration
 
@@ -669,7 +671,8 @@ curl "https://mdapi.io/health"
 
 Response includes:
 - `status`: "ok"
-- `service`: "mdapi.io"
+- `service`: "mdapi"
+- `domain`: "mdapi.io"
 - `description`: "Minimal Data API I/O: a content transformation layer primitive for AI systems. Transforms documents, images, and webpages into AI-ready Markdown and structured data, optimized for LLM efficiency and token usage."
 - `version`: "1.0.0"
 - `endpoints`: list of all endpoints with their paths
