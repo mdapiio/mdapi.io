@@ -330,11 +330,17 @@ When payment is required, the service may provide the following headers:
   `⚠️ This crypto payment is IRREVERSIBLE. Once sent it cannot be refunded.
   Only continue if you intend to pay. Verify the amount and that the recipient
   wallet belongs to mdapi.io before sending.`
-- Do not request payment or await a `Continue` reply until this warning has been shown.
+- Do not request payment or await the user's payment confirmation until this
+  warning has been shown.
 - Ask the user to complete the payment externally.
-- After payment is completed, instruct the user to reply with the exact word: `Continue`.
-- Do not proceed until the user replies with `Continue`.
-- After the user replies with `Continue`, continue to token activation using the exact token and memo from the `402` response.
+- After the user has completed the payment externally, ask them to confirm it.
+- The service is global and international: the user may confirm payment in ANY
+  language and ANY form - a word (`Continue`, `done`, `paid`, `ok`, `yes`), a
+  symbol (e.g. `+`), or any other acknowledgement. What matters is the MEANING:
+  confirm payment only when the user clearly indicates they have paid. Never
+  require one specific literal word, and never block on a missing `Continue`.
+- Proceed to token activation only once the user has confirmed payment, using the
+  exact token and memo from the `402` response.
 - If activation is successful, perform the conversion and return the final result.
 
 #### Manual payment guidance
@@ -382,7 +388,9 @@ Before submitting payment, verify:
 - Do not mix autonomous `PAYMENT-*` headers with manual `X-*` payment headers.
 - After successful payment, continue to token activation using the exact token and memo from the `402` response.
 - After successful activation, return the requested conversion result in the same request.
-- If payment must be completed manually, ask the user to pay externally and reply with `Continue`.
+- If payment must be completed manually, ask the user to pay externally and
+  confirm when done - in any language or form (e.g. `Continue`, `done`, `+`);
+  recognizing the confirmation by MEANING, never by one exact word.
 - Attempt autonomous payment at most ONCE per request. Never retry payment
   automatically in a loop; on failure, fall back to the manual flow.
 - Autonomous payment requires explicit user consent or a pre-authorized
@@ -571,7 +579,7 @@ Example request:
     "message": {
       "messageId": "msg_1",
       "parts": [
-        {"text": "Convert https://example.com"}
+        {"text": "https://example.com"}
       ]
     }
   }
@@ -732,11 +740,11 @@ curl -H "Authorization: Bearer YOUR_TOKEN" -H "X-Memo-Required: YOUR_MEMO" "http
 ### OpenAI-compatible request
 ```json
 {
-  "model": "markdown-v1",
+  "model": "mdapi-v1",
   "messages": [
     {
       "role": "user",
-      "content": "Convert https://example.com"
+      "content": "https://example.com"
     }
   ],
   "stream": false
@@ -746,13 +754,13 @@ curl -H "Authorization: Bearer YOUR_TOKEN" -H "X-Memo-Required: YOUR_MEMO" "http
 ### OpenAI-compatible with paid token
 
 ```bash
-curl -X POST "https://mdapi.io/v1/chat/completions"   -H "Authorization: Bearer YOUR_TOKEN"   -H "X-Memo-Required: YOUR_MEMO"   -H "Content-Type: application/json"   -d '{"model":"markdown-v1","messages":[{"role":"user","content":"Convert https://example.com"}]}'
+curl -X POST "https://mdapi.io/v1/chat/completions"   -H "Authorization: Bearer YOUR_TOKEN"   -H "X-Memo-Required: YOUR_MEMO"   -H "Content-Type: application/json"   -d '{"model":"mdapi-v1","messages":[{"role":"user","content":"https://example.com"}]}'
 ```
 
 After activation, use token only (no memo needed):
 
 ```bash
-curl -X POST "https://mdapi.io/v1/chat/completions"   -H "Authorization: Bearer YOUR_ACTIVATED_TOKEN"   -H "Content-Type: application/json"   -d '{"model":"markdown-v1","messages":[{"role":"user","content":"Convert https://example.com"}]}'
+curl -X POST "https://mdapi.io/v1/chat/completions"   -H "Authorization: Bearer YOUR_ACTIVATED_TOKEN"   -H "Content-Type: application/json"   -d '{"model":"mdapi-v1","messages":[{"role":"user","content":"https://example.com"}]}'
 ```
 
 ## Output discipline
