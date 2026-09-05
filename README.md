@@ -595,8 +595,8 @@ const response = await fetch('https://mdapi.io/v1/chat/completions', {
     'Authorization': 'Bearer YOUR_TOKEN'
   },
   body: JSON.stringify({
-    model: 'markdown-v1',
-    messages: [{ role: 'user', content: 'Convert https://example.com' }],
+    model: 'mdapi-v1',
+    messages: [{ role: 'user', content: 'https://example.com' }],
     stream: true
   })
 });
@@ -686,8 +686,8 @@ from openai import OpenAI
 # OpenAI-compatible streaming
 client = OpenAI(base_url='https://mdapi.io/v1', api_key='YOUR_TOKEN')
 stream = client.chat.completions.create(
-    model='markdown-v1',
-    messages=[{'role': 'user', 'content': 'Convert https://example.com'}],
+    model='mdapi-v1',
+    messages=[{'role': 'user', 'content': 'https://example.com'}],
     stream=True
 )
 for chunk in stream:
@@ -938,11 +938,11 @@ async fn main() -> Result<()> {
     let token = std::env::var("MDAPI_TOKEN")?;
 
     let body = serde_json::json!({
-        "model": "markdown-v1",
+        "model": "mdapi-v1",
         "messages": [
             {
                 "role": "user",
-                "content": "Convert https://example.com"
+                "content": "https://example.com"
             }
         ],
         "stream": true
@@ -980,8 +980,8 @@ client = OpenAI(
 
 try:
     response = client.chat.completions.create(
-        model="markdown-v1",
-        messages=[{"role": "user", "content": "Convert https://example.com"}]
+        model="mdapi-v1",
+        messages=[{"role": "user", "content": "https://example.com"}]
     )
     print(response.choices[0].message.content)
 except Exception as e:
@@ -991,13 +991,13 @@ except Exception as e:
 #### OpenAI with paid token
 
 ```bash
-curl -X POST "https://mdapi.io/v1/chat/completions"   -H "Authorization: Bearer YOUR_TOKEN"   -H "X-Memo-Required: YOUR_MEMO"   -H "Content-Type: application/json"   -d '{"model":"markdown-v1","messages":[{"role":"user","content":"Convert https://example.com"}]}'
+curl -X POST "https://mdapi.io/v1/chat/completions"   -H "Authorization: Bearer YOUR_TOKEN"   -H "X-Memo-Required: YOUR_MEMO"   -H "Content-Type: application/json"   -d '{"model":"mdapi-v1","messages":[{"role":"user","content":"https://example.com"}]}'
 ```
 
 After activation, use token only (no memo needed):
 
 ```bash
-curl -X POST "https://mdapi.io/v1/chat/completions"   -H "Authorization: Bearer YOUR_ACTIVATED_TOKEN"   -H "Content-Type: application/json"   -d '{"model":"markdown-v1","messages":[{"role":"user","content":"Convert https://example.com"}]}'
+curl -X POST "https://mdapi.io/v1/chat/completions"   -H "Authorization: Bearer YOUR_ACTIVATED_TOKEN"   -H "Content-Type: application/json"   -d '{"model":"mdapi-v1","messages":[{"role":"user","content":"https://example.com"}]}'
 ```
 
 ## A2A Configuration
@@ -1030,7 +1030,7 @@ Or use JSON-RPC directly:
       "message": {
         "messageId": "msg-uuid-1",
          "parts": [
-           { "text": "Convert https://example.com" }
+           { "text": "https://example.com" }
         ]
       }
   }
@@ -1049,7 +1049,7 @@ Or use JSON-RPC directly:
 | SubscribeToTask      | Subscribe to task updates via SSE       |
 
 > **Single source via `input`:** the `input` parameter in the message parts is the unified source - the same as the REST endpoint. A bare URL
-> inside a text part (e.g. `"Convert https://example.com"`) is extracted automatically and used as the conversion source, so you don't need to wrap it
+> inside a text part (e.g. `"https://example.com"`) is extracted automatically and used as the conversion source, so you don't need to wrap it
 > in structured JSON. Instructions such as `Summarize` should be passed via the structured `{ "input": "...", "prompt": "..." }` form, not mixed into the text.
 
 ### A2A Examples
@@ -1065,7 +1065,7 @@ curl -X POST https://mdapi.io/a2a   -H "Content-Type: application/a2a+json"   -d
       "message": {
         "messageId": "msg-uuid-1",
         "parts": [
-          { "text": "Convert https://example.com" }
+          { "text": "https://example.com" }
         ]
       }
     }
@@ -1153,7 +1153,9 @@ curl -X POST https://mdapi.io/a2a   -H "Content-Type: application/a2a+json"   -d
       "message": {
         "messageId": "msg-uuid-4",
         "parts": [
-          { "text": "Now convert the tables to JSON" }
+          {
+            "text": "{"input":"https://example.com","prompt":"Convert the tables to JSON"}"
+          }
         ]
       }
     }
@@ -1290,7 +1292,7 @@ curl -X POST https://mdapi.io/a2a   -H "Content-Type: application/a2a+json"   -H
       "message": {
         "messageId": "msg-uuid-5",
          "parts": [
-           { "text": "Convert https://example.com" }
+           { "text": "https://example.com" }
          ]
       }
     }
