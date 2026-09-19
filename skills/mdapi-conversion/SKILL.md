@@ -128,12 +128,25 @@ When processing content via the `input` parameter (URLs, files, or raw text):
 ## Supported formats
 
 Documents:
-- PDF
 - DOCX
+- DOC
+- ODT
+- RTF
+- PDF
+
+Spreadsheets:
 - XLSX
 - XLS
-- ODT
 - ODS
+- XLSM
+- XLSB
+- ET
+- Numbers
+
+Presentations:
+- PPTX
+- PPT
+- ODP
 
 Images:
 - JPEG
@@ -141,6 +154,8 @@ Images:
 - PNG
 - WebP
 - SVG
+- GIF
+- BMP
 
 Text:
 - HTML
@@ -148,6 +163,13 @@ Text:
 - JSON
 - CSV
 - TXT
+- MD
+
+E-books:
+- EPUB
+
+Archives:
+- ZIP
 
 Webpages:
 - Any publicly accessible URL
