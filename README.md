@@ -37,12 +37,16 @@ GET /.well-known/ai-discovery.json
 
 ## Supported Formats
 
-| Type      | Formats                        |
-| --------- | ------------------------------ |
-| Documents | PDF, DOCX, XLSX, XLS, ODT, ODS |
-| Images    | JPEG, JPG, PNG, WebP, SVG      |
-| Text      | HTML, XML, JSON, CSV, TXT      |
-| Webpages  | Any publicly accessible URL    |
+| Type          | Formats                                 |
+| ------------- | --------------------------------------- |
+| Documents     | DOCX, DOC, ODT, RTF, PDF                |
+| Spreadsheets  | XLSX, XLS, ODS, XLSM, XLSB, ET, Numbers |
+| Presentations | PPTX, PPT, ODP                          |
+| Images        | JPEG, JPG, PNG, WebP, SVG, GIF, BMP     |
+| Text          | HTML, XML, JSON, CSV, TXT, MD           |
+| E-books       | EPUB                                    |
+| Archives      | ZIP                                     |
+| Webpages      | Any publicly accessible URL             |
 
 ## Source Parameters (all protocols)
 
