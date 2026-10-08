@@ -37,16 +37,16 @@ GET /.well-known/ai-discovery.json
 
 ## Supported Formats
 
-| Type          | Formats                                 |
-| ------------- | --------------------------------------- |
-| Documents     | DOCX, DOC, ODT, RTF, PDF                |
-| Spreadsheets  | XLSX, XLS, ODS, XLSM, XLSB, ET, Numbers |
-| Presentations | PPTX, PPT, ODP                          |
-| Images        | JPEG, JPG, PNG, WebP, SVG, GIF, BMP     |
-| Text          | HTML, XML, JSON, CSV, TXT, MD           |
-| E-books       | EPUB                                    |
-| Archives      | ZIP                                     |
-| Webpages      | Any publicly accessible URL             |
+| Type          | Formats                                                                                                                                                                                                         |
+| ------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Documents     | DOCX, DOC, DOT, WIZ, ODT, RTF, PDF                                                                                                                                                                              |
+| Spreadsheets  | XLSX, XLS, XLT, ODS, XLSM, XLSB, ET, Numbers, DTA                                                                                                                                                               |
+| Presentations | PPTX, PPT, POT, PPS, PWZ, ODP                                                                                                                                                                                   |
+| Images        | JPEG, JPG, PNG, WebP, SVG, GIF, BMP                                                                                                                                                                             |
+| Text          | HTML, XML, JSON, CSV, TSV, TXT, MD, YAML, TOML, JS, PY, PL, RB, GO, RS, C, CPP, CS, JAVA, PHP, CSS, SCSS, SASS, LESS, SQL, SH, PS1, BAT, ASM, TEX, RST, GRAPHQL, JSON5, HCL, LOG, CONF, INI, VTT, VCF, ICS, EML |
+| E-books       | EPUB                                                                                                                                                                                                            |
+| Archives      | ZIP, TAR, TGZ, 7Z, GZ, XZ, LZMA, BZ2, TBZ2, TBZ, ZST, TZST                                                                                                                                                      |
+| Webpages      | Any publicly accessible URL                                                                                                                                                                                     |
 
 ## Source Parameters (all protocols)
 
@@ -57,10 +57,89 @@ Every protocol (REST, MCP, ACP, A2A, OpenAI) converges on the **same conversion 
 | `input`   | string | Content to convert: a URL (http(s)://...), a data URI (data:mime/type;base64,...), or plain text. Auto-detected: http(s):// → URL, data: → file, otherwise → text. |
 
 The `input` parameter is auto-detected by the core: URLs (starting with `http://` or `https://`) are fetched, data URIs (starting with `data:`) are decoded as files, and anything else is treated as raw text.
-Additional parameters (`prompt`, `result`, `stream`, `token`, `memo`) are orthogonal and may be combined with `input`.
+All other parameters are orthogonal and may be combined with `input`.
+
+| Parameter  | Values                                               | Description                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                     |
+| ---------- | ---------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `result`   | `markdown`, `prompt`, `both`, `meta`                 | What the answer is: `markdown` (the converted text layer), `prompt` (the model's answer to `prompt`), `both`, or `meta` - a free reconnaissance answer that reports the parts of the document and their sizes, with no content, no paid call and no free-trial slot.                                                                                                                                                                                                                                                                                                                                                                                                                            |
+| `part`     | `1`..`parts.count`, `N-M`, or a comma-separated list | Serves the parts of a document instead of the whole answer, so a one-page request of a 500-page document sends one page to the model and returns one page. The unit is the document's natural boundary - page (PDF), slide (presentations), sheet (spreadsheets), chapter (EPUB and archives, an expanded `.tar.zst` included) - or one A4 sheet of text for formats without one; the units table says which format owns which. Every response self-describes the range in `parts` (JSON body) and `X-MDAPI-Parts` / `X-MDAPI-Part-Unit` (headers), so the count never has to be guessed. `part` also decides how a resource larger than the input gate is read - see the addressability table. |
+| `capacity` | `low`, `medium`, `high`, `max`                       | Working window of the paid LLM stage, symmetric in input and output tokens: `low` (the 16K floor inside the minimum price), `medium`, `high`, or `max` - the whole selected input, and the default. It narrows what is sent to the model, never what is returned: the markdown a caller receives is not cut.                                                                                                                                                                                                                                                                                                                                                                                    |
+| `ttl`      | seconds, clamped to 3600..31536000 (`0` disables)    | How long the converted markdown may be reused: an identical request inside the window is answered without re-converting it, and a reuse re-arms the same lifetime. It is also the consent to store what `includes=attachments` returns - the images then travel as temporary `GET /att/{id}` links with this lifetime instead of inline data URIs. Default 1 hour (24 hours for the documentation examples).                                                                                                                                                                                                                                                                                    |
+| `includes` | `attachments`                                        | Extra products on top of the answer: `attachments` adds the resource's embedded images where the format carries them (office documents, PDF, EPUB, HTML/RTF, legacy DOC/XLS/PPT), inline as data URIs by default and as `GET /att/{id}` links when `ttl` is set. Each entry carries the image's name, type and size, plus its pixel size and source position when those are known - enough to decide which image is worth fetching or looking at.                                                                                                                                                                                                                                               |
 
 All five protocols expose the same `input` source and apply the same transformations, streaming, and prompt-driven processing - the only
 difference is the transport (REST query/JSON, MCP `tools/call`, ACP `session/prompt`, OpenAI `messages`, A2A `message.parts`).
+
+### Reading a document in parts
+
+A conversion self-describes its part range, so a large document can be walked part by part without converting it again. The two headers are on every response; the same pair sits in the JSON body under `parts`.
+
+| Field                              | Meaning                                                                                                                                                               |
+| ---------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `parts.count` / `X-MDAPI-Parts`    | How many parts the document has - the range `part` accepts                                                                                                            |
+| `parts.unit` / `X-MDAPI-Part-Unit` | What a part is: `page`, `slide`, `sheet`, `chapter`, or `a4` (one A4 sheet of text)                                                                                   |
+| `parts.listed`                     | A book's inventory, in document order. It can name more entries than `parts.count`: a clamped book keeps its whole listing, so the tail is listed but not addressable |
+| `parts.truncated`                  | The document was cut while it was built (archive entry cap or output budget). Present only when true                                                                  |
+| `parts.names` / `parts.sizes`      | `result=meta` only: the title of each part, and its size in chars, tokens and bytes - what fits a context window, before paying for it                                |
+
+`result=meta` reports the same range for free before anything is converted - ask for it first when the size of the answer matters more than the answer.
+
+The unit is decided by the format, not chosen by the caller:
+
+| Unit      | Formats                                                                                                                        | What one unit is                                                                                                                                                                                                     |
+| --------- | ------------------------------------------------------------------------------------------------------------------------------ | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `page`    | PDF                                                                                                                            | One page. Every page carries its own heading, so a page range is a part range                                                                                                                                        |
+| `slide`   | Presentations (PPTX, PPT, POT, PPS, ODP)                                                                                       | One slide, in document order                                                                                                                                                                                         |
+| `sheet`   | Spreadsheets (XLSX, XLS, XLSM, XLSB, ODS, ET, Numbers, DTA)                                                                    | One sheet, carrying its own name as the heading                                                                                                                                                                      |
+| `chapter` | Books - EPUB and the archives (ZIP, TAR, 7z, and the compression family once it is unwrapped)                                  | One entry of the book. `.tar.zst`, `.tar.xz`, `.tar.bz2` and `.tar.gz` expand to the same book as a plain `.zip`, and so does a compressed file opened from a data URI - one entry, one unit, whatever the transport |
+| `a4`      | Anything else with a text layer and no natural boundary - DOCX, DOC, ODT, RTF, text and code, CSV/TSV, JSON/YAML, HTML, images | One A4 sheet of text: 2500 characters, the density of a page at 12pt. It is also the fallback when a format has a boundary of its kind but its markdown carries none, so `parts.unit` is always the truth to read    |
+
+A part carries the document's front matter in front of it - the title, the metadata block and a book's `## Contents` listing, everything before the first unit - so a single part is readable on its own, without a second request for the context. This is what `parts.sizes` measures: each size is what `part=N` alone returns, front matter included, so the sizes add up to a little more than the whole document rather than exactly to it. A part of an A4 document has no front matter to carry and gets a generated `## Part N` heading instead.
+
+### Documents larger than the input gate
+
+The input ceiling applies to the document, not to the answer, and it is a property of one string rather than of the transport:
+
+The input ceiling is memory on one string, not a limit on the answer: a 50M-character document is about 100MB in UTF-16 inside an isolate that holds 128MB, so the gate is how large the document is. It does not shrink the response and is not a transport limit - a 60MB document refused by the gate would have been a far smaller answer. Above the gate, formats that can be addressed by parts are read as parts and the document is never materialized at all (the table above says which); for the ones that cannot, nothing lifts it: `part` selects inside a document that has already been built, and streaming frames the answer without making the document smaller.
+
+Whether a large resource can still be read at all is a property of its format, and it is decided before the first byte is fetched:
+
+| Formats                                           | Above the input gate         | Why                                                                                                                                                                                                                                                                                  |
+| ------------------------------------------------- | ---------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| DOCX, XLSX, XLSM, XLSB, PPTX, ODT, ODS, ODP, EPUB | By the extension alone       | The text of a package is a few small entries while the bulk is media nobody needs for extraction, so the document is read entry by entry and stays reachable whole - with or without `part`                                                                                          |
+| PDF                                               | By the extension alone       | The cross-reference table maps every object to an absolute offset, so text streams are read directly and image streams skipped - reachable whole, with or without `part`                                                                                                             |
+| ZIP, TAR, 7z                                      | With `part` or `result=meta` | The index sits in the tail (a ZIP's central directory, a 7z's index behind its signature header; a TAR's headers ARE its index), so the inventory is free and any one entry can be fetched as a slice. Without `part` the whole book is the answer, and building it needs every byte |
+| GZ, XZ, LZMA, BZ2, ZST and `.tar.*`               | Not addressable              | Sequential formats with no tail index: a record is reachable only after everything before it has been decompressed, so the input gate stands                                                                                                                                         |
+| DOC, XLS, PPT (legacy binary office)              | Not addressable              | These are OLE2/CFB containers with no ZIP index, so there is nothing to seek with and the input gate stands                                                                                                                                                                          |
+| File mode (data URI)                              | Not addressable              | The bytes are already in the request body, which has no ranges to address; the gate applies to the decoded payload                                                                                                                                                                   |
+
+### Reading the embedded images
+
+`includes=attachments` returns the images a document carries. On GET the markdown holds them directly; on POST the same images come back in `attachments[]`, an index describing each one, so an image can be judged before it is transferred or looked at.
+
+| Field               | Meaning                                                                                                                                                                                                                                                                                                                                                                                                                           |
+| ------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `name`              | The image's own name when the document carries one, otherwise its `img-N` placeholder - the same string the markdown uses as alt text                                                                                                                                                                                                                                                                                             |
+| `mimeType`          | The image type (`image/png`, `image/jpeg`, ...)                                                                                                                                                                                                                                                                                                                                                                                   |
+| `size`              | Length in bytes - what fetching this one image would transfer                                                                                                                                                                                                                                                                                                                                                                     |
+| `placeholder`       | The `img-N` token this entry replaced in the markdown. That reference resolves to an inline data URI, or to `url` when `ttl` is set                                                                                                                                                                                                                                                                                               |
+| `width` / `height`  | Pixel size read from the image header. Absent when the header could not be read; the two are always present together or both absent, and an absent pair never means zero pixels                                                                                                                                                                                                                                                   |
+| `units[]`           | Where the image sat in the source: `{kind, index}`, `kind` = `slide` or `sheet`, plus `name` for sheets. Absent when the position is unknown. One image reused on several pages is ONE entry carrying several units - looking at it once answers for every page it sits on. Word (DOC) images carry no unit: their anchor is a per-character reference the native extractor does not read, so they arrive as one block at the end |
+| `url` / `expiresAt` | Link mode only (an explicit `ttl`): the temporary `GET /att/{id}` link and when it stops working. Inline mode carries neither - the bytes are already in the markdown, and the array stays an index without them                                                                                                                                                                                                                  |
+
+A field is present only when the format allowed us to know it - the office, PDF, HTML/RTF and legacy DOC/XLS/PPT readers differ in what they record, and an absent `width`/`height` or `units` never means zero or none. Asking for attachments costs no model call: it is the same native extraction, with the images kept instead of dropped.
+
+### Where the index rides
+
+The index belongs to the conversion, not to the transport: the core builds `parts` and `attachments[]` once and every protocol hands them to the client, so nothing is lost by connecting through one endpoint instead of another - only the slot differs (below). A protocol's own shape is never bent to carry them. When `stream` is on, the core sends the index before the content (a `products` frame) and the protocol attaches it to its final frame.
+
+| Protocol | Where the index rides                                                                 |
+| -------- | ------------------------------------------------------------------------------------- |
+| REST     | The POST JSON body, at the top level                                                  |
+| MCP      | The `tools/call` result (JSON text content, declared by `outputSchema`)               |
+| A2A      | `artifact.metadata` on the task artifact - in a stream, on the final `artifactUpdate` |
+| ACP      | `_meta` on the `PromptResponse` result                                                |
+| OpenAI   | The response body, at the top level beside `prompt_result`                            |
 
 ## Limits
 
@@ -103,18 +182,24 @@ Simple content conversion using query parameters. Returns Markdown directly.
 
 #### Parameters
 
-| Parameter | Type    | Required | Description                                                 |
-| --------- | ------- | -------- | ----------------------------------------------------------- |
-| `input`   | string  | *        | Content to convert (URL, text, or data URI - auto-detected) |
-| `prompt`  | string  |          | Custom instructions for LLM processing                      |
-| `result`  | string  |          | Response format: `markdown`, `prompt`, or `both`            |
-| `stream`  | boolean |          | Enable streaming: true for SSE response                     |
-| `token`   | string  |          | Access token for paid tier                                  |
-| `memo`    | string  |          | Memo for token activation                                   |
+| Parameter  | Type    | Required | Description                                                 |
+| ---------- | ------- | -------- | ----------------------------------------------------------- |
+| `input`    | string  | *        | Content to convert (URL, text, or data URI - auto-detected) |
+| `prompt`   | string  |          | Custom instructions for LLM processing                      |
+| `result`   | string  |          | Response format: `markdown`, `prompt`, `both`, `meta`       |
+| `stream`   | boolean |          | Enable streaming: true for SSE response                     |
+| `part`     | string  |          | Parts of the document to convert - see below                |
+| `capacity` | string  |          | Working window of the paid model stage                      |
+| `ttl`      | integer |          | Seconds the converted markdown may be reused                |
+| `includes` | string  |          | Extra products (e.g. embedded images)                       |
+| `token`    | string  |          | Access token for paid tier                                  |
+| `memo`     | string  |          | Memo for token activation                                   |
 
 *The `input` parameter is required.*
 
 > **⚠️ Browser URL limit:** GET requests with long `input` or `prompt` values may exceed browser URL limits (~2048 characters). Use POST with JSON body for large payloads.
+
+> **URLs that carry their own query string (`&`).** A raw `&` splits the GET query string: `?input=https://host/api?sql=A&id=2` delivers `input=https://host/api?sql=A` plus a stray `id=2`. The service rebuilds the missing part - every GET parameter it does not define itself is treated as a parameter of the target resource and appended back to `input` in the order you sent it, before the fetch and the cache key. This is a repair of a truncated request, not a substitution: the robust way is to percent-encode the whole `input` value (as in the example below) or to use POST with a JSON body, where `&` is not special.
 
 ### POST / (Content conversion via JSON)
 
@@ -122,14 +207,18 @@ Supports content conversion via JSON body. The `input` parameter accepts URLs, t
 
 #### Parameters
 
-| Parameter | Type    | Required | Description                                                 |
-| --------- | ------- | -------- | ----------------------------------------------------------- |
-| `input`   | string  | *        | Content to convert (URL, text, or data URI - auto-detected) |
-| `prompt`  | string  |          | Custom instructions for LLM processing                      |
-| `result`  | string  |          | Response format: `markdown`, `prompt`, or `both`            |
-| `stream`  | boolean |          | Enable streaming: true for SSE response                     |
-| `token`   | string  |          | Access token for paid tier                                  |
-| `memo`    | string  |          | Memo for token activation                                   |
+| Parameter  | Type    | Required | Description                                                 |
+| ---------- | ------- | -------- | ----------------------------------------------------------- |
+| `input`    | string  | *        | Content to convert (URL, text, or data URI - auto-detected) |
+| `prompt`   | string  |          | Custom instructions for LLM processing                      |
+| `result`   | string  |          | Response format: `markdown`, `prompt`, `both`, `meta`       |
+| `stream`   | boolean |          | Enable streaming: true for SSE response                     |
+| `part`     | string  |          | Parts of the document to convert - see below                |
+| `capacity` | string  |          | Working window of the paid model stage                      |
+| `ttl`      | integer |          | Seconds the converted markdown may be reused                |
+| `includes` | string  |          | Extra products (e.g. embedded images)                       |
+| `token`    | string  |          | Access token for paid tier                                  |
+| `memo`     | string  |          | Memo for token activation                                   |
 
 *The `input` parameter is required.*
 
@@ -137,11 +226,14 @@ Supports content conversion via JSON body. The `input` parameter accepts URLs, t
 
 The `result` parameter controls the response format for both GET and POST requests.
 
-| Value                | Description                                                     |
-| -------------------- | --------------------------------------------------------------- |
-| `markdown` (default) | Returns the converted Markdown content                          |
-| `prompt`             | Returns the result of LLM processing with `prompt` instructions |
-| `both`               | Returns both `markdown` and `prompt_result` in the response     |
+| Value                | Description                                                                                             |
+| -------------------- | ------------------------------------------------------------------------------------------------------- |
+| `markdown` (default) | Returns the converted Markdown content                                                                  |
+| `prompt`             | Returns the result of LLM processing with `prompt` instructions                                         |
+| `both`               | Returns both `markdown` and `prompt_result` in the response                                             |
+| `meta`               | Reconnaissance only: the parts of the document and their sizes, without content and without a paid call |
+
+**Response body by method.** `GET` always answers with Markdown (`Content-Type: text/markdown`) - errors and `402` included. `POST` always answers with the JSON envelope. Source content that has no Markdown form of its own (JSON, JavaScript, source code, configuration, tab-separated data) is delivered verbatim inside a fenced code block, so its own syntax is never read as Markdown.
 
 When `result=both`:
 
@@ -176,6 +268,7 @@ curl "https://mdapi.io/?input=...&stream=true"
 Response format (OpenAI-compatible SSE, one JSON object per `data:` line):
 ```json
 data: {"type":"token_info","token_status":"valid","token_balance":0.99,"token_expires":1798761600}
+data: {"type":"products","parts":{...},"attachments":[...]}   // only when the request produced an index
 data: {"choices":[{"index":0,"delta":{"content":" chunk"},"finish_reason":null}]}
 data: {"choices":[{"index":0,"delta":{"content":" more"},"finish_reason":null}]}
 data: {"choices":[{"index":0,"delta":{},"finish_reason":"stop"}]}
@@ -198,16 +291,19 @@ data: [DONE]
 
 ### Response Codes
 
-| Code | Description       | Response Body (GET)                                              | Response Body (POST)                                                     |
-| ---- | ----------------- | ---------------------------------------------------------------- | ------------------------------------------------------------------------ |
-| 200  | Success           | Markdown content                                                 | JSON with `success`, markdown, prompt_result, metrics, token fields      |
-| 402  | Payment Required  | Markdown payment instructions (`X-Error-Code: payment_required`) | JSON with `success:false`, `code:"payment_required"`, and payment object |
-| 400  | Bad Request       | Markdown error + `X-Error-Code` header                           | JSON `{"success":false,"error":"...","code":"invalid_request"}`          |
-| 401  | Invalid Token     | Markdown error + `X-Error-Code` header                           | JSON `{"success":false,"error":"...","code":"unauthorized"}`             |
-| 404  | Not Found         | Markdown error + `X-Error-Code` header                           | JSON `{"success":false,"error":"...","code":"not_found"}`                |
-| 413  | Payload Too Large | Markdown error + `X-Error-Code` header                           | JSON `{"success":false,"error":"...","code":"too_large"}`                |
-| 429  | Rate Limited      | Markdown error + `X-Error-Code` header                           | JSON `{"success":false,"error":"...","code":"rate_limited"}`             |
-| 500  | Server Error      | Markdown error + `X-Error-Code` header                           | JSON `{"success":false,"error":"...","code":"server_error"}`             |
+| Code | Description            | Response Body (GET)                                              | Response Body (POST)                                                                                                                  |
+| ---- | ---------------------- | ---------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------- |
+| 200  | Success                | Markdown content                                                 | JSON with `success`, markdown, prompt_result, metrics, token fields                                                                   |
+| 402  | Payment Required       | Markdown payment instructions (`X-Error-Code: payment_required`) | JSON with `success:false`, `code:"payment_required"`, and payment object                                                              |
+| 400  | Bad Request            | Markdown error + `X-Error-Code` header                           | JSON `{"success":false,"error":"...","code":"invalid_request"}`                                                                       |
+| 401  | Invalid Token          | Markdown error + `X-Error-Code` header                           | JSON `{"success":false,"error":"...","code":"unauthorized"}`                                                                          |
+| 404  | Not Found              | Markdown error + `X-Error-Code` header                           | JSON `{"success":false,"error":"...","code":"not_found"}`                                                                             |
+| 413  | Payload Too Large      | Markdown error + `X-Error-Code` header                           | JSON `{"success":false,"error":"...","code":"too_large"}`                                                                             |
+| 415  | Unsupported Media Type | Markdown error + `X-Error-Code` header                           | JSON `{"success":false,"error":"...","code":"unsupported_format"}` - or `"code":"encrypted_archive"` for a password-protected archive |
+| 429  | Rate Limited           | Markdown error + `X-Error-Code` header                           | JSON `{"success":false,"error":"...","code":"rate_limited"}`                                                                          |
+| 500  | Server Error           | Markdown error + `X-Error-Code` header                           | JSON `{"success":false,"error":"...","code":"server_error"}`                                                                          |
+
+Every error carries a stable `code` string next to the HTTP status - in the JSON body as `code`, and in the `X-Error-Code` header for the plain-markdown responses. **Branch on the code, never on the message text**; the codes are durable, the messages are not.
 
 ### Token Status
 
@@ -270,6 +366,9 @@ curl "https://mdapi.io/?input=https://example.com&prompt=Summarize&result=both"
 
 # Text with prompt (auto result=prompt)
 curl "https://mdapi.io/?input=Hello World&prompt=Summarize"
+
+# URL that carries its own query string (percent-encode the whole input)
+curl --get --data-urlencode "input=https://example.com/api/3/action/datastore_search_sql?sql=SELECT%201&resource_id=abc" "https://mdapi.io/"
 
 # Token activation via GET (activate and use)
 curl -H "Authorization: Bearer YOUR_TOKEN" -H "X-Memo-Required: YOUR_MEMO" "https://mdapi.io/?input=https://example.com"
