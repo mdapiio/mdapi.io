@@ -3,11 +3,11 @@
 mdapi.io - Minimal Data API I/O: a content transformation layer primitive for AI systems.
 
 
-Transforms documents, images, and webpages into AI-ready Markdown and structured data, optimized for LLM efficiency and token usage.
+Transforms files and webpages into AI-ready Markdown and structured data, optimized for LLM efficiency and token usage.
 
 ## What mdapi.io does
 
-mdapi.io takes webpages, documents, images, and raw text and returns exactly what your model or agent needs:
+mdapi.io takes files and webpages and returns exactly what your model or agent needs:
 
 - Clean Markdown instead of raw HTML or PDF clutter.
 - Structured data when you need fields, tables, or entities.
@@ -210,5 +210,4 @@ mdapi.io turns complex input into compact, AI-ready output so humans and autonom
 **The service is provided "AS IS".**
 
 
-> mdapi.io is an edge-native service-transport primitive for AI, autonomous-agents, and the Web4 ecosystem.
-
+> mdapi.io is an edge-native service-transport primitive for AI, autonomous agents, and the Web4 ecosystem.
