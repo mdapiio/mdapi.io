@@ -1,6 +1,6 @@
 ---
 name: mdapi-conversion
-description: Use mdapi.io to transform documents, images, webpages, and text into AI-ready Markdown or structured data, with prompt-driven transformation, streaming, x402 payments, token activation, and REST/MCP/ACP/A2A/OpenAI-compatible access.
+description: Use mdapi.io to transform files and webpages into AI-ready Markdown or structured data, with prompt-driven transformation, streaming, x402 payments, token activation, and REST/MCP/ACP/A2A/OpenAI-compatible access.
 version: 1.0.0
 security:
   classification: data-transform
@@ -16,7 +16,7 @@ security:
 # mdapi.io - Minimal Data API I/O: a content transformation layer primitive for AI systems.
 
 
-Transforms documents, images, and webpages into AI-ready Markdown and structured data, optimized for LLM efficiency and token usage.
+Transforms files and webpages into AI-ready Markdown and structured data, optimized for LLM efficiency and token usage.
 
 > **Skill freshness check:** If you loaded this skill from a local copy or cache,
 > fetch the latest reference: `GET https://mdapi.io/.well-known/skill.md`.
@@ -147,6 +147,9 @@ Spreadsheets:
 - ET
 - Numbers
 - DTA
+- RDS
+- RDA
+- RData
 
 Presentations:
 - PPTX
@@ -232,10 +235,10 @@ Webpages:
 
 A file travels as a data URI (`data:<mime>;base64,...`) and the declared MIME is what the service reads - the file name is consulted only when the type is absent or carries no format, and failing that the leading bytes are inspected.
 
-| Declared MIME in the data URI                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                    | How it is read                                                                                                                                                                                                         |
-| -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `application/pdf`, `application/vnd.openxmlformats-officedocument.wordprocessingml.document`, `application/vnd.openxmlformats-officedocument.spreadsheetml.sheet`, `application/vnd.ms-excel`, `application/vnd.ms-excel.sheet.macroenabled.12`, `application/vnd.ms-excel.sheet.binary.macroenabled.12`, `application/vnd.oasis.opendocument.text`, `application/vnd.oasis.opendocument.spreadsheet`, `application/vnd.apple.numbers`, `application/x-stata-dta`, `image/jpeg`, `image/png`, `image/webp`, `image/svg+xml`, `image/gif`, `image/bmp`, `text/html`, `application/xml`, `text/xml`, `text/csv`                    | Converted: a binary document, an image or marked-up text, answered as Markdown                                                                                                                                         |
-| `text/plain`, `application/json`, `text/json`, `text/markdown`, `application/javascript`, `text/javascript`, `text/yaml`, `application/toml`, `text/x-python`, `text/x-perl`, `text/x-ruby`, `text/x-golang`, `text/x-rust`, `text/x-c`, `text/x-c++`, `text/x-csharp`, `text/x-java`, `text/x-php`, `text/css`, `text/x-scss`, `text/x-sass`, `text/x-less`, `text/x-sql`, `text/x-sh`, `text/x-powershell`, `text/x-msdos-batch`, `text/x-asm`, `text/x-tex`, `text/x-rst`, `application/graphql`, `application/json5`, `text/x-hcl`, `text/tab-separated-values`, `text/vtt`, `text/vcard`, `text/calendar`, `message/rfc822` | Read as text with no conversion: source code, configuration and markup, tabular text and structured data. The fenced code language comes from the MIME itself, so a `text/x-python` payload arrives fenced as `python` |
+| Declared MIME in the data URI                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                      | How it is read                                                                                                                                                                                                         |
+| ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `application/pdf`, `application/vnd.openxmlformats-officedocument.wordprocessingml.document`, `application/vnd.openxmlformats-officedocument.spreadsheetml.sheet`, `application/vnd.ms-excel`, `application/vnd.ms-excel.sheet.macroenabled.12`, `application/vnd.ms-excel.sheet.binary.macroenabled.12`, `application/vnd.oasis.opendocument.text`, `application/vnd.oasis.opendocument.spreadsheet`, `application/vnd.apple.numbers`, `application/x-stata-dta`, `application/x-rds`, `image/jpeg`, `image/png`, `image/webp`, `image/svg+xml`, `image/gif`, `image/bmp`, `text/html`, `application/xml`, `text/xml`, `text/csv` | Converted: a binary document, an image or marked-up text, answered as Markdown                                                                                                                                         |
+| `text/plain`, `application/json`, `text/json`, `text/markdown`, `application/javascript`, `text/javascript`, `text/yaml`, `application/toml`, `text/x-python`, `text/x-perl`, `text/x-ruby`, `text/x-golang`, `text/x-rust`, `text/x-c`, `text/x-c++`, `text/x-csharp`, `text/x-java`, `text/x-php`, `text/css`, `text/x-scss`, `text/x-sass`, `text/x-less`, `text/x-sql`, `text/x-sh`, `text/x-powershell`, `text/x-msdos-batch`, `text/x-asm`, `text/x-tex`, `text/x-rst`, `application/graphql`, `application/json5`, `text/x-hcl`, `text/tab-separated-values`, `text/vtt`, `text/vcard`, `text/calendar`, `message/rfc822`   | Read as text with no conversion: source code, configuration and markup, tabular text and structured data. The fenced code language comes from the MIME itself, so a `text/x-python` payload arrives fenced as `python` |
 
 The MIME declared in the data URI decides how the bytes are read, not the file name: a type the service knows is used as given. Only when it is absent, or is a placeholder that carries no format, does the extension of the file name get a say, and if neither settles it the leading bytes are inspected. A document is accepted by its MIME wherever the format is supported, so `.pdf`, `.PDF` and a file with no name at all read the same when the type is declared. Formats the service reads itself - EPUB, legacy DOC/XLS/PPT, PPTX, RTF, the archives and the compression family - are resolved the same way.
 
@@ -1057,7 +1060,7 @@ Response includes:
 - `status`: "ok"
 - `service`: "mdapi"
 - `domain`: "mdapi.io"
-- `description`: "Minimal Data API I/O: a content transformation layer primitive for AI systems. Transforms documents, images, and webpages into AI-ready Markdown and structured data, optimized for LLM efficiency and token usage."
+- `description`: "Minimal Data API I/O: a content transformation layer primitive for AI systems. Transforms files and webpages into AI-ready Markdown and structured data, optimized for LLM efficiency and token usage."
 - `version`: "1.0.0"
 - `endpoints`: list of all endpoints with their paths
 - `examples`: usage examples for common operations
