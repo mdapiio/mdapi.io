@@ -136,6 +136,13 @@ Documents:
 - ODT
 - RTF
 - PDF
+- JATS
+- TEI
+- DOCBOOK
+- DITA
+- FB2
+- FB3
+- DAISY
 
 Spreadsheets:
 - XLSX
@@ -150,6 +157,14 @@ Spreadsheets:
 - RDS
 - RDA
 - RData
+- NPY
+- NPZ
+- HYPER
+- SLK
+- SYLK
+- DIF
+- PRN
+- FWF
 
 Presentations:
 - PPTX
@@ -158,6 +173,18 @@ Presentations:
 - PPS
 - PWZ
 - ODP
+
+Data and databases:
+- DBF
+- ODB
+- BED
+- GTF
+- GFF
+- FASTA
+- FASTQ
+- XYZ
+- CIF
+- PDB
 
 Images:
 - JPEG
@@ -210,6 +237,15 @@ Text:
 - VCF
 - ICS
 - EML
+- ADOC
+- ORG
+- TEXI
+- INFO
+- POD
+- MAN
+- ME
+- MS
+- NFO
 
 E-books:
 - EPUB
@@ -231,14 +267,16 @@ Archives:
 Webpages:
 - Any publicly accessible URL
 
+Every name in the list is the file extension itself, so a caller holding data.npy finds it there as NPY; the extension is matched without regard to case.
+
 ### How a file is read
 
 A file travels as a data URI (`data:<mime>;base64,...`) and the declared MIME is what the service reads - the file name is consulted only when the type is absent or carries no format, and failing that the leading bytes are inspected.
 
-| Declared MIME in the data URI                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                      | How it is read                                                                                                                                                                                                         |
-| ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `application/pdf`, `application/vnd.openxmlformats-officedocument.wordprocessingml.document`, `application/vnd.openxmlformats-officedocument.spreadsheetml.sheet`, `application/vnd.ms-excel`, `application/vnd.ms-excel.sheet.macroenabled.12`, `application/vnd.ms-excel.sheet.binary.macroenabled.12`, `application/vnd.oasis.opendocument.text`, `application/vnd.oasis.opendocument.spreadsheet`, `application/vnd.apple.numbers`, `application/x-stata-dta`, `application/x-rds`, `image/jpeg`, `image/png`, `image/webp`, `image/svg+xml`, `image/gif`, `image/bmp`, `text/html`, `application/xml`, `text/xml`, `text/csv` | Converted: a binary document, an image or marked-up text, answered as Markdown                                                                                                                                         |
-| `text/plain`, `application/json`, `text/json`, `text/markdown`, `application/javascript`, `text/javascript`, `text/yaml`, `application/toml`, `text/x-python`, `text/x-perl`, `text/x-ruby`, `text/x-golang`, `text/x-rust`, `text/x-c`, `text/x-c++`, `text/x-csharp`, `text/x-java`, `text/x-php`, `text/css`, `text/x-scss`, `text/x-sass`, `text/x-less`, `text/x-sql`, `text/x-sh`, `text/x-powershell`, `text/x-msdos-batch`, `text/x-asm`, `text/x-tex`, `text/x-rst`, `application/graphql`, `application/json5`, `text/x-hcl`, `text/tab-separated-values`, `text/vtt`, `text/vcard`, `text/calendar`, `message/rfc822`   | Read as text with no conversion: source code, configuration and markup, tabular text and structured data. The fenced code language comes from the MIME itself, so a `text/x-python` payload arrives fenced as `python` |
+| Declared MIME in the data URI                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                     | How it is read                                                                                                                                                                                                         |
+| --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `application/pdf`, `application/vnd.openxmlformats-officedocument.wordprocessingml.document`, `application/vnd.openxmlformats-officedocument.spreadsheetml.sheet`, `application/vnd.ms-excel`, `application/vnd.ms-excel.sheet.macroenabled.12`, `application/vnd.ms-excel.sheet.binary.macroenabled.12`, `application/vnd.oasis.opendocument.text`, `application/vnd.oasis.opendocument.spreadsheet`, `application/vnd.apple.numbers`, `application/x-stata-dta`, `application/x-rds`, `application/x-npy`, `application/x-hyper`, `application/x-npz`, `application/x-jats`, `application/x-tei`, `application/tei+xml`, `application/x-docbook`, `application/docbook+xml`, `application/x-dita`, `application/dita+xml`, `application/x-fictionbook+xml`, `application/fb2`, `application/fictionbook3+zip`, `application/fb3`, `application/x-dtbook+xml`, `application/x-daisy`, `image/jpeg`, `image/png`, `image/webp`, `image/svg+xml`, `image/gif`, `image/bmp`, `text/html`, `application/xml`, `text/xml`, `text/csv` | Converted: a binary document, an image or marked-up text, answered as Markdown                                                                                                                                         |
+| `text/plain`, `application/json`, `text/json`, `text/markdown`, `application/javascript`, `text/javascript`, `text/yaml`, `application/toml`, `text/x-python`, `text/x-perl`, `text/x-ruby`, `text/x-golang`, `text/x-rust`, `text/x-c`, `text/x-c++`, `text/x-csharp`, `text/x-java`, `text/x-php`, `text/css`, `text/x-scss`, `text/x-sass`, `text/x-less`, `text/x-sql`, `text/x-sh`, `text/x-powershell`, `text/x-msdos-batch`, `text/x-asm`, `text/x-tex`, `text/x-rst`, `application/graphql`, `application/json5`, `text/x-hcl`, `text/tab-separated-values`, `text/vtt`, `text/vcard`, `text/calendar`, `message/rfc822`, `text/asciidoc`, `text/x-asciidoc`, `text/org`, `text/x-org`, `text/x-texinfo`, `application/x-texinfo`, `application/x-info`, `text/x-info`, `text/x-pod`, `application/x-pod`, `text/x-troff-man`, `application/x-troff-man`, `text/x-troff-me`, `application/x-troff-me`, `text/x-troff-ms`, `application/x-troff-ms`, `text/x-nfo`                                                          | Read as text with no conversion: source code, configuration and markup, tabular text and structured data. The fenced code language comes from the MIME itself, so a `text/x-python` payload arrives fenced as `python` |
 
 The MIME declared in the data URI decides how the bytes are read, not the file name: a type the service knows is used as given. Only when it is absent, or is a placeholder that carries no format, does the extension of the file name get a say, and if neither settles it the leading bytes are inspected. A document is accepted by its MIME wherever the format is supported, so `.pdf`, `.PDF` and a file with no name at all read the same when the type is declared. Formats the service reads itself - EPUB, legacy DOC/XLS/PPT, PPTX, RTF, the archives and the compression family - are resolved the same way.
 
@@ -755,6 +793,7 @@ emits it in its own native frame format:
 - streaming
 - system instructions
 - structured extraction
+- `response_format: { "type": "json_object" }` - JSON mode where this endpoint writes the system prompt itself; a schema request is accepted but not enforced
 
 Use it when the host agent is already built around OpenAI-compatible chat completions.
 
