@@ -128,14 +128,44 @@ When processing content via the `input` parameter (URLs, files, or raw text):
 
 ## Supported formats
 
-Documents:
+### Documents
+
+Office and publishing documents. The knowledge is the body: the text, the tables and the structure of the document itself. Useful when the question is about the content of a document rather than about a record inside a dataset.
+
+#### Word processors
+
+Text documents written by a word processor: the paragraphs, the headings, the tables and the embedded images they carry.
+
 - DOCX
 - DOC
 - DOT
 - WIZ
 - ODT
 - RTF
-- PDF
+- WPD
+- WP5
+- WP6
+- WP
+- DJVU
+- HC
+- HWP
+- HWPX
+- UOF
+- UOT
+- SXW
+- IDML
+- ODM
+- DOCM
+- DOTX
+- DOTM
+- FODT
+- FOTT
+- OTT
+
+#### Publishing markup
+
+Scholarly and book publishing formats whose structure is the meaning: the article section, the chapter, the footnote, the citation.
+
 - JATS
 - TEI
 - DOCBOOK
@@ -143,130 +173,476 @@ Documents:
 - FB2
 - FB3
 - DAISY
+
+#### Paginated and print layout
+
+Fixed-layout documents: a page is a page. Useful when the position of the content on the sheet matters, not only the content.
+
+- PDF
+- AI
 - XPS
 - OXPS
 - VSDX
-- HWPX
-- AKN
-- FDX
-- MUSICXML
-- ENEX
-- MSG
-- HWP
-- ODG
 - PS
 - EPS
+- DVI
+
+#### Reference libraries
+
+Bibliography files: the references of a work, with their authors, years and identifiers.
+
+- ENEX
+
+#### Music notation
+
+Musical scores: the notes, the voices and the measures they are written in.
+
+- FDX
+- MUSICXML
+
+#### Diagrams and drawings
+
+Vector drawings and diagram sources: the shapes, their connections and the layers they are drawn on.
+
 - SKETCH
 - DRAWIO
-- SXW
-- UOF
-- UOT
-- DVI
-- WPD
-- WP5
-- WP6
-- WP
-- DJVU
-- HC
 - XMIND
 - MMAP
+- ODG
 
-Notebooks:
+#### Metafile drawings
+
+Legacy Windows metafiles: a stored stream of drawing commands. The text those commands carry is read; the picture itself is not rendered.
+
+- EMF
+- WMF
+
+#### Note taking
+
+Note-taking page sets: the notes themselves, their outline, the tables they carry and the documents attached to them.
+
+- ONE
+
+### Notebooks
+
+Executable notebooks. The knowledge is the code AND the result it produced: a notebook shows how an answer was obtained, which a finished result does not.
+
+#### Data notebooks
+
+Notebooks whose cells mix code, data and output: read them to see the whole analysis, not only its last cell.
+
 - IPYNB
+
+#### Math notebooks
+
+Notebooks of a computer algebra system: the inputs, the symbolic steps and the evaluated results.
+
 - NB
 
-Spreadsheets:
+### Spreadsheets
+
+Tabular data held in cells. The knowledge is the rows and the columns, and the statistics that follow from them. Useful for reading a table without opening a spreadsheet program.
+
+#### Excel family
+
+Excel workbooks: the sheets, the used range, the formulas and the cell types.
+
 - XLSX
 - XLS
 - XLT
-- ODS
 - XLSM
 - XLSB
+- XLTX
+- XLTM
+- XLAM
+
+#### Office spreadsheets
+
+OpenDocument and WPS Office sheets: the same table in an open, XML-based container.
+
+- ODS
+- FODS
+- OTS
 - ET
+
+#### Apple Numbers
+
+Apple Numbers sheets: the tables, the formulas and the chart definitions they carry.
+
 - Numbers
+
+#### Statistical packages
+
+Serialized R and Stata objects: the variables, their labels, their types and the values behind them.
+
 - DTA
 - RDS
 - RDA
 - RData
+
+#### Numeric arrays
+
+N-dimensional arrays: the shape, the dtype and the values of a computed block of numbers.
+
 - NPY
 - NPZ
+
+#### Analytics stores
+
+Columnar analytics databases: the tables, the columns and their types, and where the data came from.
+
 - HYPER
+
+#### Legacy exchange formats
+
+Old tabular exchange formats: the rows, as they were written when a spreadsheet program had to fit a printer.
+
 - SLK
 - SYLK
 - DIF
 - PRN
 - FWF
-- SXC
+
+#### Lotus 1-2-3
+
+Lotus 1-2-3 worksheets: the classic cell grid of the spreadsheet era.
+
 - WK1
 - WK2
 - WK3
 - WK4
+
+#### Star Office
+
+StarOffice sheets: the cell grid before the ODF standard took over.
+
+- SXC
 - UOS
 
-Presentations:
+### Presentations
+
+Slide decks. The knowledge is the narrative: one idea per slide, plus the speaker notes that explain it.
+
+#### PowerPoint family
+
+PowerPoint decks and their templates: the slides, the notes and the media they embed.
+
 - PPTX
 - PPT
 - POT
 - PPS
 - PWZ
+- POTX
+- POTM
+- PPSX
+- PPSM
+
+#### OpenDocument Impress
+
+OpenDocument decks: the slides, the masters and the styles they use.
+
 - ODP
+- FODP
+- OTP
+
+#### Star Impress
+
+StarImpress presentations: the slide structure of the pre-ODF office suite.
+
 - SXI
 - UOP
 
-Data and databases:
+### Data and databases
+
+Data containers of every kind: records, columns, schemas, and the structures of scientific, geospatial and engineering data. Useful to see the shape of a dataset and a bounded sample of its content.
+
+#### Legacy desktop databases
+
+Old desktop database files: the records, their fields and the memo blobs attached to them.
+
 - DBF
+- FPT
+- DBT
 - ODB
+- MSI
+
+#### Document databases
+
+Binary document stores: the documents themselves, with their fields and their binary payloads.
+
+- BSON
+
+#### Genomics and annotation
+
+Sequence and annotation formats: the features, their coordinates and the sequences they refer to.
+
 - BED
 - GTF
 - GFF
 - FASTA
 - FASTQ
-- XYZ
+
+#### Crystallographic structures
+
+Atomic structures: the atoms, their residues, their coordinates and the crystal cell they sit in.
+
 - CIF
 - PDB
+- XYZ
+
+#### Medical and scientific imaging
+
+Image containers of medicine and science: the patient or the acquisition, the geometry of the data set and the pixel coding.
+
 - NII
 - FITS
 - MRC
 - EDF
 - BDF
 - NRRD
+- TIFF
+- GeoTIFF
+- DCM
 - JCAMP-DX
+
+#### Scientific data arrays
+
+Self-describing arrays of scientific variables: the dimensions, the units and the values.
+
 - NetCDF
+
+#### Crystallographic reflections
+
+Reflection data: the measured intensities of a crystal, with the geometry of the measurement.
+
 - CBF
 - MAP
 - MTZ
+
+#### Statistical data sets
+
+Saved statistical models and data sets: the coefficients, the factor levels and the observations.
+
 - SAV
 - ZSAV
 - XPT
 - MAT
 - DM3
 - DM4
+
+#### Columnar analytics
+
+Columnar file formats: the schema of a dataset and its compressed columns, written to be scanned by column.
+
 - PARQUET
-- SQLITE
-- SAS7BDAT
-- HDF5
 - AVRO
 - ORC
+- ARROW
+- FEATHER
 
-Images:
+#### Relational databases
+
+SQLite database files: the tables, their columns and the rows they hold.
+
+- SQLITE
+
+#### Analytics databases
+
+Analytical SQL databases: the schemas, the tables and their columns, the views, the sequences, the types and the macros the database defines.
+
+- DUCKDB
+
+#### Proprietary analytics
+
+Closed analytics stores: the tables, their columns and the values inside them.
+
+- SAS7BDAT
+
+#### Analytics workbooks
+
+BI workbooks (Tableau): the data sources, the fields and the calculated measures, and the worksheets and dashboards built on them.
+
+- TWB
+- TWBX
+
+#### BI reports
+
+Power BI reports: the pages, the visuals built on them, the fields they read, the tables behind those fields and the data sources they come from. The rows of the imported model are not decoded.
+
+- PBIX
+
+#### HDF family
+
+Hierarchical data files: the groups, the datasets and the attributes that describe them.
+
+- HDF5
+
+#### Geospatial vector data
+
+Vector geography: the features, their geometry in the field and their attributes.
+
+- SHP
+- GPX
+- GML
+- CITYGML
+- GPKG
+
+#### Point clouds
+
+Surveyed point clouds: the acquisition, the coordinate system and the points themselves.
+
+- LAS
+
+#### Meshes and 3D models
+
+Geometry models: the vertices, the faces, the materials and the units they are built in, and the scenes that compose them.
+
+- 3DS
+- GLB
+- PLY
+- STL
+- OBJ
+- OFF
+- USDC
+- USDZ
+
+#### CAD and assembly
+
+Engineering assemblies: the parts, the way they fit together and the build they describe.
+
+- L5X
+
+#### Map tile archives
+
+A map in one file: the tile index, the layers, the zoom levels and the area covered.
+
+- PMTILES
+- MBTILES
+
+### Graphs (RDF)
+
+Linked data: subjects, predicates and objects, in several syntaxes. The knowledge is the graph itself - the relationships, not the prose around them.
+
+#### RDF/XML
+
+The XML syntax of RDF: the triples of a graph written as nested elements.
+
+- RDF
+- OWL
+
+#### Turtle family
+
+The line-based RDF syntaxes: the same triples, one statement per line.
+
+- TTL
+- TRIG
+- NT
+- NQ
+- N3
+
+#### JSON linked data
+
+RDF in a JSON envelope: the graph, with its context and its node references.
+
+- JSONLD
+
+### Images
+
+Pictures. The knowledge is what the picture shows, so it is carried to the model as an image rather than as text.
+
+#### Raster images
+
+Pixel images: the picture itself, with the size and the color encoding it was stored in.
+
 - JPEG
 - JPG
 - PNG
 - WebP
-- SVG
 - GIF
 - BMP
 
-Text:
+#### Vector images
+
+Drawing instructions: the shapes, the fills and the strokes, kept as vectors rather than as pixels.
+
+- SVG
+- SVGZ
+
+### Text
+
+Plain text and the many dialects that are text: source code, configuration, markup, records and logs. The knowledge IS the text, so it is delivered verbatim and fenced by its format.
+
+#### Web markup
+
+Markup languages of the web: the elements, the attributes and the text between them.
+
 - HTML
 - XML
-- JSON
+- SGML
+
+#### Tabular text
+
+Plain tables: the rows and the columns, separated by a delimiter the format defines.
+
 - CSV
 - TSV
+
+#### Plain text and Markdown
+
+Prose without a structure of its own, and the Markdown dialects that add one.
+
 - TXT
 - MD
+- QMD
+- MDX
+
+#### Technical and manual prose
+
+Manuals and technical documents written in a markup dialect: the sections, the options and the examples.
+
+- ADOC
+- ORG
+- TEXI
+- TEX
+- RST
+- INFO
+- POD
+- MAN
+- ME
+- MS
+- NFO
+
+#### Structured data
+
+Data written as a tree of records: the fields of every object, in a self-describing envelope.
+
+- JSON
+- JSON5
+- JSONL
+- NDJSON
+- CANVAS
+
+#### Configuration
+
+Settings of a program or a system: the options, their values and the files they are read from.
+
 - YAML
 - TOML
+- HCL
+- INI
+- CONF
+- LOG
+- ENV
+- LOCK
+- DOCKERFILE
+- CFG
+- REG
+- BASE
+
+#### Source code
+
+Programs: the source of a script, a library or a component, with its imports and its types.
+
 - JS
 - PY
 - PL
@@ -278,80 +654,275 @@ Text:
 - CS
 - JAVA
 - PHP
-- CSS
-- SCSS
-- SASS
-- LESS
-- SQL
-- SH
-- PS1
-- BAT
-- ASM
-- TEX
-- RST
-- GRAPHQL
-- JSON5
-- HCL
-- LOG
-- CONF
-- INI
-- VTT
-- VCF
-- ICS
-- EML
-- MHT
-- MHTML
-- ADOC
-- ORG
-- TEXI
-- INFO
-- POD
-- MAN
-- ME
-- MS
-- NFO
-- QMD
-- MDX
-- SGML
-- E00
-- POR
-- ENW
-- STAR
-- DSL
-- CANVAS
-- BASE
-- DOCKERFILE
-- ENV
-- LOCK
-- GEOJSON
-- INO
-- WIRING
-- STEP
-- IGES
-- JSONL
-- NDJSON
 - JSX
 - TSX
 - VUE
 - SVELTE
-- KML
+
+#### Stylesheets
+
+Style rules: the selectors, the properties and the values that decide how a document looks.
+
+- CSS
+- SCSS
+- SASS
+- LESS
+
+#### Shell and scripts
+
+Command scripts: the commands, their arguments and the order they run in.
+
+- SH
+- PS1
+- BAT
+- ASM
+
+#### Interface and schema definitions
+
+Contracts of an interface: the messages, the fields and the types a caller and a server agree on.
+
+- GRAPHQL
+- GRAPHQLS
 - WSDL
 - RAML
-- GLTF
-- OBJ
+- PROTO
+- THRIFT
+- CAPNP
+- FBS
+- AVSC
+
+#### Database dumps
+
+SQL scripts: the statements that rebuild a database, in the order they must run.
+
 - DUMP
+
+#### Query languages
+
+Queries written as text: the statement, the tables it reads and the rows it asks for.
+
+- SQL
+
+#### Web session archives
+
+A recorded session with the web: the requests, the responses and their timings.
+
 - HAR
+
+#### Subtitles and captions
+
+Timed text: the spoken lines and the moment each one is said.
+
 - SRT
 - SBV
+- VTT
 
-E-books:
+#### Contacts and calendars
+
+Address books and calendars: the people, the events and the times they occupy.
+
+- VCF
+- ICS
+
+#### Banking statements
+
+Account statements in a banking interchange format: the transactions, the amounts and the balances.
+
+- MT940
+- OFX
+- QFX
+
+#### Bibliography
+
+Reference lists: the works, their authors, their years and the identifiers that resolve them.
+
+- RIS
+- BIB
+- BBL
+- ENW
+
+#### Personal finance
+
+Personal finance records: the accounts, the transactions and the categories they were filed under.
+
+- QIF
+
+#### Dataset and record dialects
+
+Datasets written in a record dialect: the cases, the variables and the values.
+
+- DSL
+- STAR
+- POR
+- USDA
+
+#### Mail transcripts
+
+A mail folder as one text file: the messages of a mailbox, with their headers.
+
+- MBOX
+
+#### Chemical structures
+
+Molecules as text: the atoms, the bonds and the coordinates a structure is drawn with.
+
+- MOL
+- SDF
+- SMI
+- MOL2
+
+#### Scene and 3D model text
+
+A scene written as text: the objects, their transforms and their materials.
+
+- GLTF
+- WRL
+
+#### Engineering and BIM
+
+Building and engineering models: the elements, their properties and the way they are related.
+
+- ASS
+- SSA
+- IFC
+
+#### Simulation inputs
+
+Decks that describe a simulation: the mesh, the materials, the boundary conditions and the solver settings.
+
+- INP
+- FOAM
+- MSH
+- VTK
+
+#### Healthcare interchange
+
+Clinical messages: the patient, the observation and the coded result.
+
+- HL7
+
+#### Business interchange
+
+Business documents exchanged between systems: the orders, the invoices and the confirmations.
+
+- EDIFACT
+
+#### Low-level bytecode
+
+Bytecode written as text: the instructions, their operands and the stack effects.
+
+- WAT
+- WAST
+
+#### Infrastructure as code
+
+Infrastructure state: the resources, their attributes and the dependencies between them.
+
+- TFSTATE
+
+#### PCB fabrication
+
+Board fabrication data: the layers, the apertures and the pads that are printed.
+
+- GBR
+
+#### Apple and Xcode
+
+Apple property lists and Xcode projects: the settings, the targets and the build phases.
+
+- PLIST
+- STRINGS
+- PBXPROJ
+
+#### Hardware description
+
+Hardware sources: the modules, the ports and the behavior they describe.
+
+- V
+- SV
+- SVH
+- VHD
+- VHDL
+
+#### Firmware images
+
+Firmware written as hexadecimal: the addresses, the bytes and the words they carry.
+
+- HEX
+- IHX
+
+#### Microcontroller projects
+
+Sketch sources for a board: the setup, the loop and the pins they use.
+
+- INO
+- WIRING
+
+#### CAD exchange text
+
+Design files exchanged as text: the geometry, the layers and the parts they hold.
+
+- STEP
+- IGES
+- MIF
+- DXF
+- KICAD
+- EAGLE
+
+#### Industrial control
+
+Controller programs: the logic, the variables and the devices they drive.
+
+- SCL
+- AWL
+
+#### Geospatial text
+
+Places and shapes written as text: the coordinates, the features and the attributes they carry.
+
+- KML
+- GEOJSON
+
+#### Web page archives
+
+A saved page with its resources, kept as one file: the content and the state it was saved in.
+
+- E00
+
+#### Music and sequence data
+
+Musical data written as text: the notes, the tracks and the timing.
+
+- MID
+
+### E-books
+
+Books in the formats readers use. The knowledge is the chapters: the body text of a long publication, navigated by its own structure.
+
+#### Open and common e-books
+
+The common e-book containers: the chapters, the front matter and the images they carry.
+
 - EPUB
 - MOBI
 - AZW
 - AZW3
-- PRC
 
-Archives:
+#### Legacy e-books
+
+Older e-book formats: the text, the markup and the images of a publication read on a device of its time.
+
+- PRC
+- AKN
+
+### Archives
+
+Containers that hold other files. The knowledge is the CONTENTS: the file list, and the readable text inside each member.
+
+#### Compressed archives
+
+Compressed file sets: the members, their sizes and the text they hold.
+
 - ZIP
 - TAR
 - TGZ
@@ -365,10 +936,159 @@ Archives:
 - ZST
 - TZST
 - LZ4
+
+#### Web archives
+
+Saved crawls of the web: the pages, the assets and the moment they were captured.
+
 - WARC
 - WEBARCHIVE
 
-Webpages:
+#### Application packages
+
+Installable packages: the files they ship, the manifest and the code that runs.
+
+- APK
+- IPA
+- JAR
+- WHL
+- VSIX
+- XPI
+- NUPKG
+- KMZ
+- SB3
+- AAB
+- CRX
+
+#### System packages
+
+System packages: the control metadata, the payload and the scripts that install them.
+
+- AR
+- DEB
+- IPK
+- UDEB
+- CAB
+
+### Network captures
+
+Captured network traffic. The knowledge is the conversation: which hosts talked, in which order, and with which payloads.
+
+#### Traffic captures
+
+Packets as they left the wire: the conversations, the endpoints and the bytes in between.
+
+- PCAP
+- PCAPNG
+
+### Vector search indexes
+
+Trained nearest-neighbour indexes. The knowledge is the structure itself: the metric, the dimension, the quantizer, the graph, and the vectors the index holds.
+
+#### Vector indexes
+
+A search structure over vectors: how it was trained, how it quantizes, and what it stores.
+
+- FAISS
+
+### AI model artifacts
+
+Trained model artifacts. The knowledge is the model's own description - architecture, tensor names, shapes, dtypes - not the weight values.
+
+#### Model artifacts
+
+The weight file of a trained model: the tensors it holds, their shapes and the graph they feed.
+
+- SAFETENSORS
+- GGUF
+- ONNX
+
+### Molecular dynamics
+
+The files a molecular dynamics run reads and writes. The knowledge is the system being simulated: its atoms, their types, the parameters they interact with, and the trajectory the run produced.
+
+#### Coordinate files
+
+Where the atoms are: the residue, the atom name and the position of every atom in the system.
+
+- GRO
+- G96
+- INPCRD
+
+#### Topology files
+
+What the system is made of: the atom types, the bonds, the charges and the interaction parameters between them.
+
+- TOP
+- ITP
+- PRMTOP
+
+#### Structure files
+
+A prepared structure: the atoms, their residues and the bonds between them.
+
+- PSF
+
+#### Force-field parameters
+
+The parameters of a force field: the bond, angle and torsion constants the simulation integrates with.
+
+- PAR
+
+#### Atom index groups
+
+Named sets of atom numbers: the groups a simulation selects by name instead of by index.
+
+- NDX
+
+#### Simulation input decks
+
+The deck that describes a run: the atom types, the bonds, the masses and the box of the system.
+
+- LMP
+
+#### Trajectories
+
+How the system moved: the coordinates of every frame of a run, as the simulation wrote them.
+
+- XTC
+- TRR
+- DCD
+
+#### Energy files
+
+What the system cost at each step: the kinetic and potential terms, frame by frame.
+
+- EDR
+
+### Mail and messaging
+
+Mail and message stores. The knowledge is the conversation: the message bodies, their headers, their attachments, and the folder structure that holds them.
+
+#### Single messages
+
+One message as a file: the headers, the body and the attachments it carries.
+
+- EML
+- EMLX
+- MHT
+- MHTML
+- MSG
+
+#### Mail stores
+
+A mailbox as one file: the folders, the messages in each of them and the state of the account.
+
+- PST
+
+### Webpages
+
+Anything published on the web. The knowledge is the page, fetched at the edge and converted where it is read.
+
+#### Web pages
+
+A URL: the page is fetched and converted, so the answer carries the content of the site, not its source code.
+
 - Any publicly accessible URL
 
 Every name in the list is the file extension itself, so a caller holding data.npy finds it there as NPY; the extension is matched without regard to case.
@@ -377,10 +1097,10 @@ Every name in the list is the file extension itself, so a caller holding data.np
 
 A file travels as a data URI (`data:<mime>;base64,...`) and the declared MIME is what the service reads - the file name is consulted only when the type is absent or carries no format, and failing that the leading bytes are inspected.
 
-| Declared MIME in the data URI                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                      | How it is read                                                                                                                                                                                                         |
-| -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `application/pdf`, `application/vnd.openxmlformats-officedocument.wordprocessingml.document`, `application/vnd.openxmlformats-officedocument.spreadsheetml.sheet`, `application/vnd.ms-excel`, `application/vnd.ms-excel.sheet.macroenabled.12`, `application/vnd.ms-excel.sheet.binary.macroenabled.12`, `application/vnd.oasis.opendocument.text`, `application/vnd.oasis.opendocument.spreadsheet`, `application/vnd.apple.numbers`, `application/x-stata-dta`, `application/x-rds`, `application/x-npy`, `application/x-hyper`, `application/x-hypercard`, `application/x-npz`, `application/x-jats`, `application/x-tei`, `application/tei+xml`, `application/x-docbook`, `application/docbook+xml`, `application/x-dita`, `application/dita+xml`, `application/x-fictionbook+xml`, `application/fb2`, `application/fictionbook3+zip`, `application/fb3`, `application/x-dtbook+xml`, `application/x-daisy`, `application/x-ipynb+json`, `multipart/related`, `application/x-mimearchive`, `application/warc`, `application/x-nifti`, `application/fits`, `application/x-mrc`, `application/x-edf`, `application/x-nrrd`, `chemical/x-jcamp-dx`, `application/x-netcdf`, `application/vnd.recordare.musicxml+xml`, `application/enex+xml`, `application/vnd.ms-xpsdocument`, `application/oxps`, `application/vnd.ms-visio.drawing`, `application/hwp+zip`, `application/x-hwp`, `application/vnd.oasis.opendocument.graphics`, `application/vnd.ms-outlook`, `application/x-mobipocket-ebook`, `application/vnd.amazon.ebook`, `application/postscript`, `application/x-sketch`, `application/vnd.jgraph.mxfile`, `application/x-webarchive`, `application/vnd.wolfram.mathematica`, `application/x-cbf`, `application/vnd.sun.xml.writer`, `application/vnd.sun.xml.calc`, `application/vnd.sun.xml.impress`, `application/x-uof`, `application/x-lotus-123`, `application/x-dvi`, `application/x-mtz`, `application/x-spss-sav`, `application/x-sas-xport`, `application/x-matlab-data`, `application/vnd.apache.parquet`, `application/vnd.sqlite3`, `application/x-sqlite3`, `application/x-sas7bdat`, `application/x-sas-data`, `application/x-hdf5`, `application/vnd.hdf`, `application/vnd.apache.avro`, `application/x-avro`, `application/vnd.apache.orc`, `application/x-orc`, `application/x-gatan-dm`, `application/vnd.wordperfect`, `application/x-wordperfect`, `application/x-xmind`, `application/vnd.xmind.workbook`, `application/vnd.mindjet.mindmanager`, `image/vnd.djvu`, `image/jpeg`, `image/png`, `image/webp`, `image/svg+xml`, `image/gif`, `image/bmp`, `text/html`, `application/xml`, `text/xml`, `text/csv` | Converted: a binary document, an image or marked-up text, answered as Markdown                                                                                                                                         |
-| `text/plain`, `application/json`, `text/json`, `text/markdown`, `application/javascript`, `text/javascript`, `text/yaml`, `application/toml`, `text/x-python`, `text/x-perl`, `text/x-ruby`, `text/x-golang`, `text/x-rust`, `text/x-c`, `text/x-c++`, `text/x-csharp`, `text/x-java`, `text/x-php`, `text/css`, `text/x-scss`, `text/x-sass`, `text/x-less`, `text/x-sql`, `text/x-sh`, `text/x-powershell`, `text/x-msdos-batch`, `text/x-asm`, `text/x-tex`, `text/x-rst`, `application/graphql`, `application/json5`, `text/x-hcl`, `text/x-dockerfile`, `application/geo+json`, `text/x-arduino`, `application/step`, `model/step`, `application/iges`, `model/iges`, `application/x-ndjson`, `text/jsx`, `text/tsx`, `text/x-vue`, `text/x-svelte`, `application/vnd.google-earth.kml+xml`, `application/wsdl+xml`, `application/raml+yaml`, `model/gltf+json`, `model/obj`, `application/x-har`, `text/x-subrip`, `text/tab-separated-values`, `text/vtt`, `text/vcard`, `text/calendar`, `message/rfc822`, `text/asciidoc`, `text/x-asciidoc`, `text/org`, `text/x-org`, `text/x-texinfo`, `application/x-texinfo`, `application/x-info`, `text/x-info`, `text/x-pod`, `application/x-pod`, `text/x-troff-man`, `application/x-troff-man`, `text/x-troff-me`, `application/x-troff-me`, `text/x-troff-ms`, `application/x-troff-ms`, `text/x-nfo`, `text/sgml`, `text/x-e00`, `text/x-spss-portable`, `text/x-endnote`, `text/x-star`, `text/x-dsl`                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                        | Read as text with no conversion: source code, configuration and markup, tabular text and structured data. The fenced code language comes from the MIME itself, so a `text/x-python` payload arrives fenced as `python` |
+| Declared MIME in the data URI                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                          | How it is read                                                                                                                                                                                                         |
+| ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `application/pdf`, `application/vnd.openxmlformats-officedocument.wordprocessingml.document`, `application/vnd.openxmlformats-officedocument.spreadsheetml.sheet`, `application/vnd.ms-excel`, `application/vnd.ms-excel.sheet.macroenabled.12`, `application/vnd.ms-excel.sheet.binary.macroenabled.12`, `application/vnd.oasis.opendocument.text`, `application/vnd.oasis.opendocument.spreadsheet`, `application/vnd.apple.numbers`, `application/x-stata-dta`, `application/x-rds`, `application/x-npy`, `application/x-hyper`, `application/x-duckdb`, `application/x-hypercard`, `application/x-tableau-workbook`, `application/x-tableau-workbook-package`, `application/x-npz`, `application/x-jats`, `application/x-tei`, `application/tei+xml`, `application/x-docbook`, `application/docbook+xml`, `application/x-dita`, `application/dita+xml`, `application/x-fictionbook+xml`, `application/fb2`, `application/fictionbook3+zip`, `application/fb3`, `application/x-dtbook+xml`, `application/x-daisy`, `application/x-ipynb+json`, `multipart/related`, `application/x-mimearchive`, `application/warc`, `application/x-nifti`, `application/fits`, `application/x-mrc`, `application/x-edf`, `application/x-nrrd`, `image/tiff`, `application/dicom`, `chemical/x-jcamp-dx`, `application/x-netcdf`, `application/vnd.recordare.musicxml+xml`, `application/enex+xml`, `application/vnd.ms-xpsdocument`, `application/oxps`, `application/vnd.ms-visio.drawing`, `application/hwp+zip`, `application/x-hwp`, `application/vnd.oasis.opendocument.graphics`, `application/vnd.ms-outlook`, `application/vnd.ms-outlook-pst`, `application/vnd.ms-outlook-ost`, `application/vnd.ms-outlook-pab`, `message/x-apple-emlx`, `application/onenote`, `application/x-mobipocket-ebook`, `application/vnd.amazon.ebook`, `application/postscript`, `application/x-sketch`, `application/vnd.jgraph.mxfile`, `application/x-webarchive`, `application/vnd.wolfram.mathematica`, `application/x-cbf`, `application/vnd.sun.xml.writer`, `application/vnd.sun.xml.calc`, `application/vnd.sun.xml.impress`, `application/x-uof`, `application/x-lotus-123`, `application/x-dvi`, `application/x-mtz`, `application/x-spss-sav`, `application/x-sas-xport`, `application/x-matlab-data`, `application/vnd.apache.parquet`, `application/vnd.sqlite3`, `application/x-sqlite3`, `application/geopackage+sqlite3`, `application/vnd.mapbox.mbtiles`, `application/x-sas7bdat`, `application/x-sas-data`, `application/x-hdf5`, `application/vnd.hdf`, `application/vnd.apache.avro`, `application/x-avro`, `application/vnd.apache.orc`, `application/x-orc`, `application/vnd.apache.arrow.file`, `application/vnd.apache.arrow.stream`, `application/x-shapefile`, `application/x-3ds`, `application/x-usdc`, `model/vnd.usdz+zip`, `application/vnd.ms-cab-compressed`, `model/gltf-binary`, `application/x-ply`, `application/x-off`, `application/x-gatan-dm`, `application/vnd.wordperfect`, `application/x-wordperfect`, `application/x-xmind`, `application/vnd.xmind.workbook`, `application/vnd.mindjet.mindmanager`, `image/vnd.djvu`, `application/x-foxpro-memo`, `application/x-dbase-memo`, `model/stl`, `application/vnd.ms-word.document.macroenabled.12`, `application/vnd.openxmlformats-officedocument.wordprocessingml.template`, `application/vnd.ms-word.template.macroenabled.12`, `application/vnd.openxmlformats-officedocument.spreadsheetml.template`, `application/vnd.ms-excel.template.macroenabled.12`, `application/vnd.ms-excel.addin.macroenabled.12`, `application/vnd.openxmlformats-officedocument.presentationml.template`, `application/vnd.ms-powerpoint.template.macroenabled.12`, `application/vnd.openxmlformats-officedocument.presentationml.slideshow`, `application/vnd.ms-powerpoint.slideshow.macroenabled.12`, `application/vnd.oasis.opendocument.text-flat-xml`, `application/vnd.oasis.opendocument.text-template-flat-xml`, `application/vnd.oasis.opendocument.spreadsheet-flat-xml`, `application/vnd.oasis.opendocument.presentation-flat-xml`, `application/vnd.oasis.opendocument.text-template`, `application/vnd.oasis.opendocument.spreadsheet-template`, `application/vnd.oasis.opendocument.presentation-template`, `application/vnd.oasis.opendocument.text-master`, `application/vnd.android.package-archive`, `application/x-ios-app`, `application/java-archive`, `application/x-wheel`, `application/vsix`, `application/x-xpinstall`, `application/x-nupkg`, `application/vnd.google-earth.kmz`, `application/x-scratch-project`, `application/x-android-app-bundle`, `application/x-plist`, `text/x-strings`, `text/x-pbxproj`, `application/bson`, `application/rdf+xml`, `text/turtle`, `application/trig`, `application/n-triples`, `application/n-quads`, `application/ld+json`, `text/n3`, `application/vnd.pmtiles`, `application/x-emf`, `application/x-wmf`, `application/x-xtc`, `application/x-gromacs-trr`, `application/x-dcd`, `application/x-gromacs-edr`, `application/x-gromacs-tpr`, `text/x-gromacs-gro`, `text/x-gromacs-g96`, `text/x-gromacs-top`, `text/x-gromacs-itp`, `text/x-gromacs-ndx`, `text/x-psf`, `text/x-charmm-par`, `text/x-amber-prmtop`, `text/x-amber-inpcrd`, `text/x-lammps-data`, `application/x-faiss`, `image/jpeg`, `image/png`, `image/webp`, `image/svg+xml`, `image/gif`, `image/bmp`, `text/html`, `application/xml`, `text/xml`, `text/csv` | Converted: a binary document, an image or marked-up text, answered as Markdown                                                                                                                                         |
+| `text/plain`, `application/json`, `text/json`, `text/markdown`, `application/javascript`, `text/javascript`, `text/yaml`, `application/toml`, `text/x-python`, `text/x-perl`, `text/x-ruby`, `text/x-golang`, `text/x-rust`, `text/x-c`, `text/x-c++`, `text/x-csharp`, `text/x-java`, `text/x-php`, `text/css`, `text/x-scss`, `text/x-sass`, `text/x-less`, `text/x-sql`, `text/x-sh`, `text/x-powershell`, `text/x-msdos-batch`, `text/x-asm`, `text/x-tex`, `text/x-rst`, `application/graphql`, `application/json5`, `text/x-hcl`, `text/x-dockerfile`, `application/geo+json`, `text/x-arduino`, `application/step`, `model/step`, `application/iges`, `model/iges`, `application/x-ndjson`, `text/jsx`, `text/tsx`, `text/x-vue`, `text/x-svelte`, `application/vnd.google-earth.kml+xml`, `application/wsdl+xml`, `application/raml+yaml`, `model/gltf+json`, `model/obj`, `application/x-har`, `text/x-subrip`, `text/x-verilog`, `text/x-vhdl`, `text/x-intel-hex`, `text/x-mapinfo-interchange`, `text/x-windows-registry`, `text/x-dxf`, `text/x-kicad`, `text/x-eda`, `text/x-plc`, `text/tab-separated-values`, `text/vtt`, `text/vcard`, `text/calendar`, `message/rfc822`, `text/asciidoc`, `text/x-asciidoc`, `text/org`, `text/x-org`, `text/x-texinfo`, `application/x-texinfo`, `application/x-info`, `text/x-info`, `text/x-pod`, `application/x-pod`, `text/x-troff-man`, `application/x-troff-man`, `text/x-troff-me`, `application/x-troff-me`, `text/x-troff-ms`, `application/x-troff-ms`, `text/x-nfo`, `text/sgml`, `text/x-e00`, `text/x-spss-portable`, `text/x-endnote`, `text/x-star`, `text/x-dsl`, `application/mbox`, `application/x-research-info-systems`, `application/x-bibtex`, `text/x-bbl`, `application/x-qif`, `application/x-mt940`, `application/x-ofx`, `application/x-qfx`, `application/x-usda`, `chemical/x-mdl-molfile`, `chemical/x-mdl-sdfile`, `model/vrml`, `text/x-ass`, `text/x-ssa`, `application/x-ifc`, `text/x-protobuf`, `text/x-thrift`, `text/x-capnp`, `text/x-flatbuffers`, `text/x-graphql-sdl`, `application/x-avsc`, `text/x-abaqus-input`, `text/x-openfoam`, `text/x-gmsh`, `text/x-vtk-legacy`, `text/x-smiles`, `text/x-mol2`, `application/x-hl7-v2`, `application/x-edifact`, `text/x-wat`, `text/x-wast`, `application/x-tfstate`, `text/x-gerber`                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                         | Read as text with no conversion: source code, configuration and markup, tabular text and structured data. The fenced code language comes from the MIME itself, so a `text/x-python` payload arrives fenced as `python` |
 
 The MIME declared in the data URI decides how the bytes are read, not the file name: a type the service knows is used as given. Only when it is absent, or is a placeholder that carries no format, does the extension of the file name get a say, and if neither settles it the leading bytes are inspected. A document is accepted by its MIME wherever the format is supported, so `.pdf`, `.PDF` and a file with no name at all read the same when the type is declared. Formats the service reads itself - EPUB, legacy DOC/XLS/PPT, PPTX, RTF, the archives and the compression family - are resolved the same way.
 
@@ -513,9 +1233,9 @@ GET /?input=https://example.com/report.pdf
 GET /?input=mdapi:1-<contentHash>&prompt=What+does+it+say+about+revenue
 ```
 
-| Field / header                        | Meaning                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                     |
-| ------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `resource_id` / `X-MDAPI-Resource-Id` | The address of the converted document this answer is about, in the form `mdapi:<schemaVersion>-<contentHash>`. Send it back as `input` - alone or together with a `prompt` - and the document is answered without being uploaded or fetched again: `input=mdapi:<address>` is read as resource mode, and every other parameter (`prompt`, `result`, `part`, `find`, `capacity`, `includes`) works exactly as it does for any other input. The address is opaque: pass it back unchanged. It is published only when the answer left an entry to address - a paid request names a `ttl` for that, while the free testing tier leaves a default entry - and it lives exactly as long as that entry, so an expired address is refused with `resource_not_found`, indistinguishable from one that never existed. |
+| Field / header                        | Meaning                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                           |
+| ------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `resource_id` / `X-MDAPI-Resource-Id` | The address of the converted document this answer is about, in the form `mdapi:<schemaVersion>-<contentHash>`. Send it back as `input` - alone or together with a `prompt` - and the document is answered without being uploaded or fetched again: `input=mdapi:1-<contentHash>` is read as resource mode, and every other parameter (`prompt`, `result`, `part`, `find`, `capacity`, `includes`) works exactly as it does for any other input. The address is opaque: pass it back unchanged. It is published only when the answer left an entry to address - a paid request names a `ttl` for that, while the free testing tier leaves a default entry - and it lives exactly as long as that entry, so an expired address is refused with `resource_not_found`, indistinguishable from one that never existed. |
 
 An address is a handle to the converted document, not a copy of it and not a link: it does not open in a browser, it is not a listing, and it does not outlive its cache entry. Reading one costs the same as any other request.
 
@@ -880,14 +1600,14 @@ Note: `result=both` streams markdown first, then prompt_result after.
 Every protocol delivers a *real* content stream when `stream: true`, but each
 emits it in its own native frame format:
 
-| Protocol         | Streaming frame format                                                                                                                                                                          |
-| ---------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| REST             | OpenAI-compatible `choices/delta` frames                                                                                                                                                        |
-| OpenAI           | `chat.completion.chunk` (`choices/delta`)                                                                                                                                                       |
-| MCP              | `notifications/message` content chunks, then one final `tools/call` result frame                                                                                                                |
-| ACP              | `session/update` notification chunks (one stable `messageId` per turn), then a final response carrying only `stopReason`                                                                        |
-| A2A              | `result.task` (`TASK_STATE_WORKING`) start frame, `result.artifactUpdate` (`{artifact, append, lastChunk}`) content frames, then `result.statusUpdate` (`TASK_STATE_COMPLETED`) - stream closes |
-| OpenAI Responses | SSE framed as Responses events - 9 events from `response.created` to `response.completed`                                                                                                       |
+| Protocol         | Streaming frame format                                                                                                                                                                                                  |
+| ---------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| REST             | OpenAI-compatible `choices/delta` frames                                                                                                                                                                                |
+| OpenAI           | `chat.completion.chunk` (`choices/delta`)                                                                                                                                                                               |
+| MCP              | `notifications/message` content chunks, then one final `tools/call` result frame, then the SSE terminator `data: [DONE]` (not a JSON-RPC frame - skip it; the result frame is already the answer)                       |
+| ACP              | `session/update` notification chunks (one stable `messageId` per turn), then a final response carrying only `stopReason`, then the SSE terminator `data: [DONE]`                                                        |
+| A2A              | `result.task` (`TASK_STATE_WORKING`) start frame, `result.artifactUpdate` (`{artifact, append, lastChunk}`) content frames, then `result.statusUpdate` (`TASK_STATE_COMPLETED`), then the SSE terminator `data: [DONE]` |
+| OpenAI Responses | SSE framed as Responses events - 9 events from `response.created` to `response.completed`                                                                                                                               |
 
 ## OpenAI-compatible endpoint
 
