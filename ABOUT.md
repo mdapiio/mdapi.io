@@ -187,7 +187,7 @@ mdapi.io turns complex input into compact, AI-ready output so humans and autonom
 - **AI Agent discovery:** https://mdapi.io/.well-known/agent.json or https://mdapi.io/agent.json
 - **A2A Agent card:** https://mdapi.io/.well-known/agent-card.json or https://mdapi.io/agent-card.json
 - **ACP manifest:** https://mdapi.io/.well-known/acp.json or https://mdapi.io/acp.json
-- **x402 payment manifest:** https://mdapi.io/.well-known/x402.json or https://mdapi.io/x402.json
+- **x402 payment manifest:** https://mdapi.io/.well-known/x402.json or https://mdapi.io/x402.json or https://mdapi.io/.well-known/x402
 - **OpenAPI specification (JSON):** https://mdapi.io/.well-known/openapi.json or https://mdapi.io/openapi.json
 - **OpenAPI specification (YAML):** https://mdapi.io/.well-known/openapi.yaml or https://mdapi.io/openapi.yaml
 - **MAPI specification:** https://mdapi.io/.well-known/mapi.md or https://mdapi.io/mapi.md
