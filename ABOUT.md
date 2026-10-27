@@ -5,38 +5,35 @@ mdapi.io - Minimal Data API I/O: a content transformation layer primitive for AI
 
 Transforms files and webpages into AI-ready Markdown and structured data, optimized for LLM efficiency and token usage.
 
+## Principles
+
+1. **One core, five protocols.** REST, MCP, A2A, ACP and the OpenAI-compatible endpoint all call the same conversion core: the transport changes, the result does not.
+2. **One description, everywhere.** The documentation and the discovery files are generated from one source, so a fact cannot be true on one surface and stale on another.
+3. **Stateless by default.** A request is converted in memory and the environment that ran it is discarded. What can outlive it is a cache entry - a `ttl` on the paid tier, a short default on the free testing tier - and an A2A task record, so that `GetTask` can answer.
+4. **Knowledge a model cannot read is still knowledge.** Documents arrive in the formats the world actually uses - PDF, office files, spreadsheets, scans, proprietary binaries - and leave as Markdown or structured data any model can use, with no toolchain on your side.
+5. **The caller's resources are the ones being spent.** Extraction and transformation run at the edge and the answer carries only what was asked for - a part, a found offset, a summary - fewer tokens, less context, less compute.
+6. **A public document is converted once, not once per caller.** When many callers read the same public resource, a `ttl` lets the work be shared: the conversion is done once and reused while the entry lives, so the same answer costs the energy of one conversion instead of many.
+
 ## What mdapi.io does
 
 mdapi.io takes files and webpages and returns exactly what your model or agent needs:
 
-- Clean Markdown instead of raw HTML or PDF clutter.
-- Structured data when you need fields, tables, or entities.
-- Prompt-driven summaries, extractions, or analyses with custom instructions.
+- Markdown - the document's own text and structure, with the markup around it removed.
+- Prompt-driven summaries, extractions, or analyses with custom instructions - structured JSON included when you ask for it.
+- The conversion and the prompt result together, when you need both.
 - Streaming output for large inputs or real-time workflows.
 
-All supported protocols and interfaces ultimately converge on the same transformation core.
+All supported protocols and interfaces ultimately converge on the same transformation core, and the goal is always the same: give you just enough data to be useful, without wasting context or tokens.
 
 ## Edge-native design
 
 mdapi.io is built for stateless edge execution.
 
 - Processing happens in memory.
-- Nothing to sign up for and nothing to clean up: no account, no history, no document library to maintain - each request stands on its own.
+- Nothing to sign up for and nothing to clean up: no account, no document library to maintain - each request stands on its own.
 - The service reduces context, token, and infrastructure usage by moving heavy extraction and transformation work to the edge.
 
 It runs on Cloudflare's global edge network rather than on machines sized in advance, and that is where the elasticity described below comes from: each request is executed by an environment created for it, and capacity is drawn from the platform as the work arrives rather than reserved ahead of time. Nothing has to be provisioned, scaled, or warmed up for a burst. What one request may consume - memory, execution time, input size - is bounded per request, and those bounds are the documented ones, not whatever the underlying platform happens to allow.
-
-## Why use it
-
-Modern AI systems work best with focused, well-structured input. mdapi.io helps you get there by:
-
-- Reducing noise - stripping navigation, boilerplate, and visual layout that models do not need.
-- Saving tokens - returning only the essential content, not entire pages or documents.
-- Cutting manual work - no need to hand-clean HTML, PDFs, or mixed-format sources.
-- Improving output quality - better inputs usually mean more accurate, stable results.
-- Simplifying automation - one consistent service for many content types and tools.
-
-Instead of teaching every agent or script how to parse and clean content, you call mdapi.io once and reuse the result wherever needed.
 
 ## Who it is for
 
@@ -62,24 +59,9 @@ Use mdapi.io when your agent needs a reliable transformation layer between raw c
 
 Agents can access mdapi.io over REST, MCP, ACP, A2A, or OpenAI-compatible APIs using the same behavior described in the discovery documents.
 
-## Built for
+## Free and paid access
 
-- IDE and coding agents.
-- Research and analysis workflows.
-- RAG pipelines and knowledge bases.
-- Multi-agent systems and swarms.
-- Human-in-the-loop review flows.
-- Edge-native AI workflows.
-- Protocol-aware service delivery.
-- Agent economics and pay-per-use workflows.
-
-## Payment-aware workflows
-
-mdapi.io supports both autonomous and human-assisted payment flows.
-
-- Autonomous agents can use a connected wallet when available for pay-per-use execution.
-- Shared swarm budgets can be used for coordinated execution.
-- Human users can complete payment manually through QR-based flows when needed.
+Two tiers, one core. The free testing tier needs no credential and runs everything that is native - every supported format, every protocol, and every parameter that asks no model for an answer - within a daily allowance of 10 conversions for one caller, out of a quota allocated for the whole service, so the full allowance is not guaranteed. The paid tier is opened by a token carrying a prepaid balance (or by an x402 payment that mints one): it adds the stages that cost a model call - `prompt`, `schema` and `ocr` - and charges each conversion from that balance, with no daily allowance. A paid stage asked for on the free tier is never skipped silently: the answer is `402` with the payment terms and the free route for the same input, and nothing is charged. The free tier lets an agent find out whether the service fits the work before paying for it. Paying does not widen the shared budget: the fair-use limit of 10000 requests/hour is counted per caller, and spreading the same work across more agents does not create more of it. Different callers may freely access the same resource.
 
 ## Usage scenarios
 
@@ -87,31 +69,21 @@ mdapi.io is a minimal, self-documenting service-transport primitive. Because eve
 
 ### Agent swarms and parallel processing
 
-Each request is handled by a stateless execution environment created for it, so capacity is drawn from the platform as the work arrives rather than reserved ahead of time. An orchestrator can fan work out across a swarm of agents, and the swarm converts many distinct resources in parallel. Because every protocol converges on the same core, agents can cooperate directly and hand compact intermediate results to one another.
-
-What an agent can plan against is its own budget rather than a platform ceiling. There are two tiers. A free tier of 10 conversions a day exists for one purpose: to let an agent find out whether the service fits the work before paying for it. The paid tier carries a fair-use budget of 10000 requests/hour counted per caller, and paid requests are counted in it. A token is a prepaid balance rather than extra rate - activating one buys volume at $0.01 per conversion and does not widen the budget, and spreading the same work across more agents does not create more of it. Different callers may freely access the same resource.
+An orchestrator can fan work out across a swarm of agents, and the swarm converts many distinct resources in parallel. Each request runs in its own stateless environment, so a swarm adds work without adding coordination, and agents can hand compact intermediate results to one another.
 
 ### Shared vs individual payment
 
 - **Shared token** - the orchestrator pays once, activates a token with a prepaid balance, and hands it to the whole swarm; each conversion decrements the balance. This batches on-chain activity and reduces blockchain load.
-- **Individual tokens** - each agent pays for its own work, activating exactly the volume it received (e.g. 166 resources → pay for 166 upfront).
+- **Individual tokens** - each agent pays for its own work, activating exactly the volume it expects to use.
 - If a wallet is missing or underfunded, the agent drops into **human-in-the-loop** mode: it returns payment details and a QR code, the human pays from a mobile device, and the agent resumes automatically on confirmation.
 
 ### Role switching and multi-agent / human collaboration
 
 An agent's role can change mid-task. One agent may fetch and normalize a webpage, then hand the compact Markdown to another agent (via the input and prompt parameters) that summarizes or extracts. The same flow works between agent and human: an IDE agent indexes scattered project documentation in mixed formats and surfaces sourced snippets; a research agent prepares RAG-ready input; a coordinator delegates and reassembles results.
 
-### Cross-protocol interoperability
-
-Because REST, MCP, ACP, A2A, and OpenAI-compatible endpoints all call the same core, different agent types can cooperate directly. Knowledge extracted on one protocol can be relayed on another - the transport is interchangeable, the result is the same.
-
 ### Bulk processing and model training
 
 For a task that needs many resources converted quickly (LLM training corpora, large-scale RAG indexing, bulk document normalization), the swarm pattern lets the work be spread across parallel stateless instances instead of run one document at a time. What bounds it in practice is the caller's own budget and the size of each document, not a provisioning step.
-
-### Edge filter in front of expensive models
-
-The core job of mdapi.io is to remove weight before it reaches reasoning. Instead of sending a raw PDF, webpage, or scanned document straight into an LLM, an agent routes it through mdapi.io first and forwards only the compact result. That keeps context windows small, cuts token spend, and avoids wasting compute on navigation, boilerplate, and layout the model never needed. The service is the heavy-lifting layer; the model gets just the part it must reason about.
 
 ### Prompt as a command between agents
 
@@ -129,32 +101,22 @@ Conversion is not all-or-nothing. `result=meta` returns the inventory of a docum
 
 mdapi.io is a global service-transport primitive: each request is assembled from the capabilities you need, brick by brick.
 
-- **Free capabilities.** Converting URLs, files, and text the edge itself can read - documents, webpages, spreadsheets, archives, legacy formats - into Markdown, structure, or inventory, up to 10 conversions a day.
-- **Paid capabilities.** `prompt` (your instruction executed by an LLM), `ocr` (text read out of images), and JavaScript rendering - JavaScript executes only in paid conversions. A prepaid token or x402 payment unlocks all of it.
-- **Caching is your choice.** Pass a `ttl` (up to a year) and the converted work is cached, so a repeat call returns the stored answer instead of repeating the work. The cache is opened by asking for it. A named `ttl` is the caller's own lease: the converted markdown is kept for that lifetime, honored as named up to the one-year ceiling; an identical request inside the window is answered without re-converting it, and reuse never extends it. Without `ttl` a paid request stores nothing at all - the document is converted, the answer returned, and no copy is kept, so a paying caller is never the reason something is held. The free testing tier keeps a short default instead (3600 seconds - one hour; 86400 - twenty-four hours - for the documentation examples) and re-arms it on reuse, so repeated calls over one document cost the service less - that tier is meant for testing, not for production documents. `ttl=0` stores nothing. Reading a resource address is asking to read, and needs no `ttl`. A request that carries a `password` is never cached: it neither reads a stored conversion nor stores one, so a document that was unlocked with a secret is never handed to a caller who did not name the same secret. On `POST /a2a` a task record is kept so that `GetTask` and `SubscribeToTask` can answer.
+- **Free capabilities.** Converting URLs, files, and text the edge itself can read - documents, webpages, spreadsheets, archives, legacy formats - into Markdown, structure, or inventory, without a paid call.
+- **Paid capabilities.** `prompt` (your instruction executed by an LLM), `ocr` (text read out of images), and rendering for pages that build their text in the browser - a paid fallback for a URL the direct fetch could not read. A prepaid token or x402 payment unlocks all of it.
+- **Caching is your choice, and retention with it.** The cache is opened by asking for it. A named `ttl` is the caller's own lease: the converted markdown is kept for that lifetime, honored as named up to the one-year ceiling; an identical request inside the window is answered without re-converting it, and reuse never extends it. Without `ttl` a paid request stores nothing at all - the document is converted, the answer returned, and no copy is kept, so a paying caller is never the reason something is held. The free testing tier keeps a short default instead (3600 seconds - one hour; 86400 - twenty-four hours - for the documentation examples) and re-arms it on reuse, so repeated calls over one document cost the service less - that tier is meant for testing, not for production documents. `ttl=0` stores nothing. Reading a resource address is asking to read, and needs no `ttl`. A request that carries a `password` is never cached: it neither reads a stored conversion nor stores one, so a document that was unlocked with a secret is never handed to a caller who did not name the same secret. An address (`resource_id`, `mdapi:...`) exists only in the reuse mode: with nothing stored there is nothing to address. On `POST /a2a` a task record is kept so that `GetTask` and `SubscribeToTask` can answer.
 
 ### Why route through the edge at all
 
 Sending raw documents straight into a frontier model works, and for one small page it is often the right call. The trade changes with volume, size, and repetition:
 
-- **Payload.** A webpage or a PDF carries layout, navigation, and encoding a model cannot use. Converting first means the model is paid for reasoning about content instead of for reading furniture.
+- **Payload.** A webpage or a PDF arrives wrapped in markup, layout and encoding a model cannot use. Converting first means the model reads text instead of a file format - and nothing is dropped on a guess, so what the page says is what the answer carries.
 - **Context.** A converted document is something a context window can actually hold; a raw one competes with the conversation it is part of.
-- **Division of labour.** Extraction and transformation do not need a frontier model. Handing them to one is the most expensive available way to remove boilerplate.
+- **Cost.** Money as well as resources: reading a document through a conversion costs less than reading it whole through a frontier model.
+- **Division of labour.** Extraction and transformation do not need a frontier model. Handing them to one is the most expensive available way to read a file.
 - **Uniformity.** One conversion contract across webpages, PDFs, office documents, spreadsheets, archives, and legacy formats means one integration instead of one per format.
 - **Addressing.** You can locate before you buy, and read one part of a large document without paying for the rest of it.
 
-The promise is deliberately a narrow one, and it is the one this service can keep: remove weight before reasoning. It is not a substitute for a model, and no conversion makes a poor source good.
-
-## What you get back
-
-Depending on how you call the service, mdapi.io can return:
-
-- Markdown - cleaned and normalized content, ready to read or feed into an LLM.
-- Prompt results - summaries, extractions, or transformations based on your instructions.
-- Both together - original conversion plus prompt-driven result when you need full control.
-- Streaming output - chunked responses for large inputs or real-time UX.
-
-The goal is always the same: give you just enough data to be useful, without wasting context or tokens.
+The promise is deliberately a narrow one, and it is the one this service can keep: remove weight before reasoning. It is not a substitute for a model, and no conversion makes a poor source good - but cleaner input also means steadier answers, because the model reasons about the text rather than about the format that carries it.
 
 ## How to start using mdapi.io
 
