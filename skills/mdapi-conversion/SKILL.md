@@ -30,10 +30,13 @@ Transforms files and webpages into AI-ready Markdown and structured data, optimi
 
 ## Features
 
-- Stateless, in-memory processing
-- Edge execution with automatic scaling
-- Prompt-driven transformation
-- AI-optimized output for LLMs
+- Access to knowledge - proprietary and legacy formats arrive as readable Markdown
+- Zero data retention - a paid request stores nothing unless a `ttl` asks for it
+- Resource savings - the heavy work runs here, not on the caller's side
+- Green energy - one public document is converted once for all callers under a `ttl`
+- Local and global economy - the caller saves, and so does everyone reading the same resource
+- Cost savings - reading a document through a conversion costs less than reading it whole through a frontier model
+- One core, five protocols - REST, MCP, A2A, ACP and the OpenAI-compatible endpoint all call the same core
 - Pay-per-use via x402 v1/v2 or manual payment
 
 ## Philosophy
@@ -934,6 +937,7 @@ Compressed file sets: the members, their sizes and the text they hold.
 - ZST
 - TZST
 - LZ4
+- Z
 
 #### Web archives
 
@@ -1102,9 +1106,9 @@ Declared MIME in the data URI:
 
 The MIME declared in the data URI decides how the bytes are read, not the file name: a type the service knows is used as given. Only when it is absent, or is a placeholder that carries no format, does the extension of the file name get a say, and if neither settles it the leading bytes are inspected. A document is accepted by its MIME wherever the format is supported, so `.pdf`, `.PDF` and a file with no name at all read the same when the type is declared. Formats the service reads itself - EPUB, legacy DOC/XLS/PPT, PPTX, RTF, the archives and the compression family - are resolved the same way.
 
-### Page boilerplate is kept
+### Content fidelity
 
-A converted page keeps its navigation, banners, footer and cookie notices: the conversion is lossless, and removing them is a guess that can delete real content while the answer still reports success.
+The conversion reports the source, it does not curate it: content is never removed on a guess, because a guess can delete what a reader needed while the answer still reports success. Choosing what matters is a separate step - `prompt` asks for one part, a summary or an extraction, and the paid LLM stage answers that instead of the whole text.
 
 ## Limits
 
@@ -1112,9 +1116,24 @@ A converted page keeps its navigation, banners, footer and cookie notices: the c
 - Max URL content: 50 MB
 - URL length: ~2048 characters (browser limit) - use POST for long text/prompt combinations
 - Rate limit: 10,000 requests per hour
-- Free tier: 10 requests per day (no token required), within the service's overall free quota
-- Paid tier: min $0.01 per conversion (USDC on Solana)
+- Free tier: 10 conversions a day to one caller, within a quota allocated for the whole service (no token required)
+- Paid tier: min $0.01 per conversion (USDC via x402); a wider `capacity` step is charged the price of its own window
 - Token validity: 1 year
+
+### Free tier against paid tier
+
+Two tiers, one core. The free testing tier needs no credential and runs everything that is native - every supported format, every protocol, and every parameter that asks no model for an answer - within a daily allowance of 10 conversions for one caller, out of a quota allocated for the whole service, so the full allowance is not guaranteed. The paid tier is opened by a token carrying a prepaid balance (or by an x402 payment that mints one): it adds the stages that cost a model call - `prompt`, `schema` and `ocr` - and charges each conversion from that balance, with no daily allowance. A paid stage asked for on the free tier is never skipped silently: the answer is `402` with the payment terms and the free route for the same input, and nothing is charged.
+
+| Aspect             | Free testing tier                         | Paid tier                                                                                                |
+| ------------------ | ----------------------------------------- | -------------------------------------------------------------------------------------------------------- |
+| Credential         | None                                      | A token with a prepaid balance                                                                           |
+| Charge             | None: a daily free allowance              | min $0.01 per conversion (USDC via x402); a wider `capacity` step is charged the price of its own window |
+| `prompt`, `schema` | Refused with the payment terms            | Answered (model answer over the document)                                                                |
+| `ocr`              | Refused with the payment terms            | Answered (paid vision pass)                                                                              |
+| Cache and address  | A 1-hour default entry, re-armed on reuse | Only a named `ttl`; otherwise nothing is kept, no address                                                |
+| Everything else    | Same core, protocols, formats, parameters | The same                                                                                                 |
+
+The quoted figure is the minimum: it buys the floor `capacity` step. A wider step is charged the price of its own window, so a request that asks for `max` costs more than one that takes the default, and the charge follows the step actually served. A balance below the minimum answers `402` until it is topped up.
 
 ## Request selection
 
@@ -1143,19 +1162,19 @@ See [Quick Start](#quick-start) above - choose by your role (IDE plugin → ACP,
 
 The token_status field (and X-Token-Status header) indicates the authentication state:
 
-| Status             | Description                                                                             |
-| ------------------ | --------------------------------------------------------------------------------------- |
-| free               | Free tier (no token required, 10 requests/day), within the service's overall free quota |
-| valid              | Paid token active with remaining balance                                                |
-| invalid            | Token not found or not provided                                                         |
-| expired            | Token validity period has ended                                                         |
-| exhausted          | Token balance has been fully used                                                       |
-| expired_pending    | Activation memo has expired                                                             |
-| activated          | Token was just activated with this request                                              |
-| verification_error | Payment verification failed                                                             |
-| invalid_payment    | Payment transaction is invalid                                                          |
-| error              | Internal error during token processing                                                  |
-| pending            | Payment required (token not yet activated)                                              |
+| Status             | Description                                                                                                       |
+| ------------------ | ----------------------------------------------------------------------------------------------------------------- |
+| free               | Free tier (no token required, 10 conversions a day to one caller, within a quota allocated for the whole service) |
+| valid              | Paid token active with remaining balance                                                                          |
+| invalid            | Token not found or not provided                                                                                   |
+| expired            | Token validity period has ended                                                                                   |
+| exhausted          | Token balance has been fully used                                                                                 |
+| expired_pending    | Activation memo has expired                                                                                       |
+| activated          | Token was just activated with this request                                                                        |
+| verification_error | Payment verification failed                                                                                       |
+| invalid_payment    | Payment transaction is invalid                                                                                    |
+| error              | Internal error during token processing                                                                            |
+| pending            | Payment required (token not yet activated)                                                                        |
 
 ## Request parameters
 
@@ -1164,16 +1183,33 @@ Every parameter below works on every protocol (REST query/JSON, MCP tool argumen
 - `input` (string, required) - Content to convert: a URL (http(s)://...), a data URI (data:mime/type;base64,...), plain text, or a resource address (mdapi:...) returned by an earlier answer. Auto-detected: http(s):// → URL, data: → file, mdapi: → resource address, otherwise → text.
 - `prompt` (string, optional) - values: free-form instructions - a question, a task, an output shape. Custom instructions for the paid LLM stage. Providing it without `result` implies `result=prompt`, so the answer is the model's answer to the prompt instead of the converted text.
 - `result` (string, optional) - values: `markdown`, `prompt`, `both`, `meta`. What the answer is: `markdown` (the converted text layer), `prompt` (the model's answer to `prompt`), `both`, or `meta` - a reconnaissance answer that reports the parts of the document and their sizes, and no content: the shape of the answer, reported before the content itself is fetched.
+- `schema` (object, optional) - values: a JSON Schema object. Imposes the shape of the answer: the paid LLM stage answers with JSON conforming to this schema, and the answer carries it parsed in `json` beside `prompt_result` - on every protocol, since the parsed value travels with the conversion, not with one endpoint. Each protocol takes it in its own place: the request body field on REST POST and OpenAI, `?schema=` on REST GET, MCP `arguments.schema`, ACP `params.schema`, A2A `data.schema` in a message part, and on OpenAI the native `response_format.json_schema.schema` as well - the OpenAI spelling of this same parameter, so a generic OpenAI client needs no special case. Providing it without `result` implies `result=prompt`; providing it without `prompt` leaves the schema itself as the task, because its property names and descriptions say what to extract. It travels the same way on both REST methods - a JSON object in the request body on POST, the same JSON object percent-encoded in `?schema=` on GET - and gets the same checks, the same answer and the same cache entry either way, because the key names the schema itself, not the spelling that carried it. A GET answers markdown by default and answers the JSON body instead when the caller asks for it with `Accept: application/json`; a markdown body cannot carry the verdict, so a GET also reports it in `X-MDAPI-Json-Conforms` and, when the answer did not conform, `X-MDAPI-Json-Error`. It contradicts nothing silently: `result=markdown` and `stream` are refused with the reason, a keyword the service cannot honor is refused with its name instead of being ignored, and an answer that still does not conform after one repair attempt comes back whole with `jsonConforms: false` and `jsonError` naming the first violation, because the answer is knowledge and is never thrown away. Asking for JSON in words keeps working exactly as before: a `prompt` that mentions JSON is answered as JSON with no schema needed.
 - `stream` (boolean, optional) - values: `true` or `false` (default `false`). Streams the answer as Server-Sent Events instead of one body: REST and OpenAI send OpenAI-compatible chunk frames, MCP sends notification chunks, ACP sends session/update messages, and A2A sends artifact updates. The streamed frames carry the same content the non-streamed answer would.
 - `part` (string, optional) - values: `1`..`parts.count`, `N-M`, or a comma-separated list. Serves the parts of a document instead of the whole answer, so a one-page request of a 500-page document sends one page to the model and returns one page. The unit is the document's natural boundary - page (PDF), slide (presentations), sheet (spreadsheets), chapter (EPUB and archives, an expanded `.tar.zst` included) - or one A4 sheet of text for formats without one; the units table says which format owns which. Every response self-describes the range in `parts` (JSON body) and `X-MDAPI-Parts` / `X-MDAPI-Part-Unit` (headers), so the count never has to be guessed. `part` also decides how a resource larger than the input gate is read - see the addressability table.
 - `find` (string, optional) - values: literal substrings, whitespace-separated (no wildcards, no regular expressions). Searches the converted document and answers with the ADDRESSES of the matches - the part number and the character offset inside that part - never the text itself, so a search costs one request instead of reading the document. Case is ignored, the match is literal, and matches do not overlap. Whitespace separates terms (`find=pay court`), and every term must occur in the same part, in any order, so the answer says where they meet; one term answers with every occurrence, as it always has. Composes with `part`: without it the whole document is searched, with it only the parts named (and each hit still carries its own part number). A needle that does not occur is an honest empty answer (`matches: 0`) - with several terms `terms[]` says which one is nowhere - and `truncated: true` marks an answer that is not the whole set of matches: the hit ceiling was reached, or the document itself was cut while it was built. Read what you found with `part=N`. A `find` is a conversion - it converts what it searches - so it costs and consumes exactly what the same request without `find` would.
-- `capacity` (string, optional) - values: `low`, `medium`, `high`, `max`. Working window of the paid LLM stage, symmetric in input and output tokens: `low` (the 16K floor inside the minimum price), `medium`, `high`, or `max` - the whole selected input, and the default. It narrows what is sent to the model, never what is returned: the markdown a caller receives is not cut.
+- `capacity` (string, optional) - values: `low`, `medium`, `high`, `max`. Working window of the paid LLM stage, symmetric in input and output tokens: `low` (the smallest window, the one the minimum price buys) and the default, `medium`, `high`, or `max` - the whole selected input. Each step is charged the price of its own window and bounds both sides of one model call - what is sent to the model and how long its answer may be. The document markdown a caller receives is never cut.
 - `ttl` (integer, optional) - values: seconds, honored as named (`0` disables; above a year - 31536000 - clamps to it). How long the converted markdown may be reused. Reuse is the caller's to ask for: without `ttl` a paid request keeps nothing, the free testing tier keeps a short default, and `ttl=0` stores nothing. A named `ttl` is also the consent to store what `attachments` delivers - the images then travel as temporary `GET /att/{id}` links with this lifetime instead of inline data URIs.
-- `attachments` (string, optional) - values: `all` or a selection of image ids (`1,4-5,16`). Delivers the resource's embedded images where the format carries them (office documents, PDF, EPUB, HTML/RTF, legacy DOC/XLS/PPT), inline as data URIs by default and as `GET /att/{id}` links when `ttl` is set. `all` is the explicit word for every image the answer's markdown names; a selection is a list or range of image ids, ordered by the document (`16,1` = `1,16`), and an id outside the answer is an honest error that names the real count. Each entry carries the image's name, type and size, plus its pixel size, source position and the part it stands in when those are known - enough to decide which image is worth fetching or looking at. The index describes the answer, never the document: only the images whose placeholder stands in the markdown being returned are listed, and only those are resolved - so `part=35` over a 500-page report lists and encodes the pictures of page 35 and leaves the other 199 alone. Without `part` the answer is the whole document and the index is the whole inventory. `find` and `result=meta` answer with the index and no bytes at all: they name which part each image sits in, and `part=N&attachments=all` then brings the bytes of the one worth having.
+- `attachments` (string, optional) - values: `all` or a selection of image ids (`1,4-5`). Delivers the resource's embedded images where the format carries them (office documents, PDF, EPUB, HTML/RTF, legacy DOC/XLS/PPT), inline as data URIs by default and as `GET /att/{id}` links when `ttl` is set. `all` is the explicit word for every image the answer's markdown names; a selection is a list or range of image ids, ordered by the document (`16,1` = `1,16`), and an id outside the answer is an honest error that names the real count. Each entry carries the image's name, type and size, plus its pixel size, source position and the part it stands in when those are known - enough to decide which image is worth fetching or looking at. The index describes the answer, never the document: only the images whose placeholder stands in the markdown being returned are listed, and only those are resolved - so `part=35` over a 500-page report lists and encodes the pictures of page 35 and leaves the other 199 alone. Without `part` the answer is the whole document and the index is the whole inventory. `find` and `result=meta` answer with the index and no bytes at all: they name which part each image sits in, and `part=N&attachments=all` then brings the bytes of the one worth having.
 - `ocr` (string, optional) - values: `all` or a selection of image ids (`1,4-5`). The paid vision pass over the images the answer's markdown names: each selected image is read as its own conversion and the recognized text is printed in the markdown under the image's `img-N` placeholder. The main conversion - free or paid - is unchanged by it; the selection is independent of `attachments` (one can take image bytes without reading them, or read them without taking the bytes). The free tier answers `402` with the payment terms rather than spending a paid call, and ids follow the same grammar and document order as `attachments`.
 - `token` (string, optional) - values: an access token (a secret). The paid tier's credential, issued by the x402 payment flow. It carries a prepaid balance: activating one buys volume, and it does not widen the hourly budget. It travels in the protocol's own slot - the Authorization header, tool arguments, per-call params or message data parts - never in a URL.
-- `memo` (string, optional) - values: the memo from the `402` answer. Activates a token against its payment on first use. It is needed once, together with the token; afterwards the token alone is enough and the memo is not read.
+- `memo` (string, optional) - values: the memo from the `402` answer. Activates a token against its payment on first use. It is needed once, together with the token; afterwards the token alone is enough and the memo is not read. A memo payment issued for a live token adds to its balance instead of minting a second token: the whole amount received is credited, the token keeps its expiry, and a token whose balance can no longer pay for a request stays alive and is refilled the same way.
 - `password` (string, optional) - values: the password that opens the payload (a secret). Opens a locked payload: the password of an encrypted archive, document or container. It is a credential, so it never travels in the query string - send it in the request body field `password` or in the `X-Content-Password` header, and a `?password=...` is refused with `400` before the URL is fetched. A request that carries a password is never cached: it neither reads a stored conversion nor stores one, so a document that was unlocked with a secret is never handed to a caller who did not name the same secret. Two codes say which way it went: `password_required` (the payload is locked and no password came) and `wrong_password` (a password came and did not open it).
+
+`input` is the only required parameter: every other one is optional and independent of the rest, so a request is assembled from the capabilities it needs and nothing else has to be named. A JSON body accepts exactly these names: a field outside the list is refused with `400` (`invalid_request`) and the answer names the rejected field and the accepted ones, so a misspelled name cannot pass as a request that simply did not ask for that product.
+
+### Parameters that change what the service does
+
+| Parameter     | Without it                                         | With it                                                                                            |
+| ------------- | -------------------------------------------------- | -------------------------------------------------------------------------------------------------- |
+| `prompt`      | The converted text                                 | The model's answer to it (`result=prompt`)                                                         |
+| `result=meta` | The document is converted and charged              | Structure only: no content, no paid call, no slot                                                  |
+| `part`        | The whole document                                 | One unit or range: page, slide, sheet, chapter                                                     |
+| `find`        | The conversion                                     | Addresses only (`part` + offset); `result` does not apply                                          |
+| `capacity`    | The whole input goes to the model                  | A symmetric window (`low`..`max`): the model reads and answers inside it; the markdown stays whole |
+| `ttl`         | Paid: nothing stored, no address (free: a default) | An entry plus an address for that lifetime; no renewal                                             |
+| `attachments` | Images are named, their bytes stay out             | Bytes arrive: inline, or `GET /att/{id}` with a `ttl`                                              |
+| `ocr`         | Images are named, never read                       | A paid vision pass per selected image (paid tier)                                                  |
+| `password`    | A locked payload is refused by name                | Opened in memory; that request is never cached                                                     |
 
 ### Reading a large document in parts
 
@@ -1202,7 +1238,7 @@ A part carries the document's front matter in front of it - the title, the metad
 `find` searches the converted document for literal substrings, ignoring case, and answers with the ADDRESSES of its matches - the part and the offset inside it - never the matched text. Whitespace inside `find` separates terms, and a hit is then a part where every term occurs, in any order: `find=pay court` answers the pages carrying both, and `find=pay` answers every page carrying that word part, `payment` included. That is what makes reconnaissance cheap: one request tells you where something is, and `part=N` brings back only that piece, so a 500-page document is never sent to you to be searched.
 
 ```
-GET /?input=https://example.com/report.pdf&find=revenue&part=100-200
+GET /?input=<document-url>&find=revenue&part=100-200
 {"success":true,"result":"find","parts":{"count":500,"unit":"page"},
  "find":{"needle":"revenue","matches":2,"hits":[{"part":137,"offset":4021},{"part":188,"offset":96}]}}
 ```
@@ -1221,10 +1257,10 @@ Searching is a conversion, not a shortcut around one: the resource is fetched, c
 
 ### Asking again without sending the document again
 
-A converted document is addressed by a `resource_id`, and a second question about it carries that address instead of the document. The first request converts and answers; the next one sends `input=mdapi:...` - alone or with a `prompt` - and the document is not uploaded, fetched or converted again.
+A converted document that the answer kept an entry for is addressed by a `resource_id`, and a second question about it carries that address instead of the document. The first request converts and answers; the next one sends `input=mdapi:...` - alone or with a `prompt` - and the document is not uploaded, fetched or converted again. The same value travels two ways: the answer publishes it as `resource_id`, and a later request sends it as `input=mdapi:...`. It exists only while an entry for the document does - the free testing tier keeps one by default, while a paid request keeps one only when it names a `ttl`, so a paid request without one stores nothing and publishes no address.
 
 ```
-GET /?input=https://example.com/report.pdf
+GET /?input=https://example.com
 {"success":true,"resource_id":"mdapi:1-<contentHash>", ...}
 
 GET /?input=mdapi:1-<contentHash>&prompt=What+does+it+say+about+revenue
@@ -1245,13 +1281,13 @@ Whether a large resource is still readable, and on what condition, follows from 
 - **DOCX, XLSX, XLSM, XLSB, PPTX, ODT, ODS, ODP, EPUB** - Above the input gate: By the extension alone. The text of a package is a few small entries while the bulk is media nobody needs for extraction, so the document is read entry by entry and stays reachable whole - with or without `part`
 - **PDF** - Above the input gate: By the extension alone. The cross-reference table maps every object to an absolute offset, so text streams are read directly and image streams skipped - reachable whole, with or without `part`
 - **ZIP, TAR, 7z** - Above the input gate: With `part` or `result=meta`. The index sits in the tail (a ZIP's central directory, a 7z's index behind its signature header; a TAR's headers ARE its index), so the inventory is read from the tail alone, without the bulk, and any one entry can be fetched as a slice. Without `part` the whole book is the answer, and building it needs every byte
-- **GZ, XZ, LZMA, BZ2, ZST and `.tar.*`** - Above the input gate: Not addressable. Sequential formats with no tail index: a record is reachable only after everything before it has been decompressed, so the input gate stands
+- **GZ, XZ, LZMA, BZ2, ZST, LZ4, Z and `.tar.*`** - Above the input gate: Not addressable. Sequential formats with no tail index: a record is reachable only after everything before it has been decompressed, so the input gate stands
 - **DOC, XLS, PPT (legacy binary office)** - Above the input gate: Not addressable. These are OLE2/CFB containers with no ZIP index, so there is nothing to seek with and the input gate stands
 - **File mode (data URI)** - Above the input gate: Not addressable. The bytes are already in the request body, which has no ranges to address; the gate applies to the decoded payload
 
 ### Reading the embedded images
 
-`attachments=all` keeps the images the document carries instead of dropping them: on GET they arrive inline in the markdown, on POST the same images come back as the `attachments[]` index, one entry per image, described well enough to triage an image before it is transferred or looked at. A selection (`1,4-5,16`) takes those ids only, ordered by the document. `ocr=all | 1,4-5` is the separate paid pass that prints the recognized text of the selected images under their placeholders. A field is present only when the format let us know it, so an absent field never means zero. The model input of such a request is the text alone - the images go back into the answer after that input has been cut - so reading a picture is a separate capability, not this index.
+`attachments=all` keeps the images the document carries instead of dropping them: on GET they arrive inline in the markdown, on POST the same images come back as the `attachments[]` index, one entry per image, described well enough to triage an image before it is transferred or looked at. A selection (`1,4-5`) takes those ids only, ordered by the document. `ocr=all | 1,4-5` is the separate paid pass that prints the recognized text of the selected images under their placeholders. A field is present only when the format let us know it, so an absent field never means zero. The model input of such a request is the text alone - the images go back into the answer after that input has been cut - so reading a picture is a separate capability, not this index.
 
 - `name` - The image's own name when the document carries one, otherwise its `img-N` placeholder - the same string the markdown uses as alt text
 - `mimeType` - The image type (`image/png`, `image/jpeg`, ...)
@@ -1287,7 +1323,7 @@ Triage with the index before spending anything: an entry that reports a small `w
 
 ### Where the index rides
 
-The index belongs to the conversion, not to the transport: the core builds `parts`, `find` and `attachments[]` once and every protocol hands them to the client, so nothing is lost by connecting through one endpoint instead of another - only the slot differs (below). A protocol's own shape is never bent to carry them. When `stream` is on, the core sends the index before the content (a `products` frame) and the protocol attaches it to its final frame. `ocr` is not part of this index: it produces no product beside the answer, it prints the recognized text into the markdown itself, so it needs no per-protocol slot.
+The index belongs to the conversion, not to the transport: the core builds `parts`, `find` and `attachments[]` once and every protocol hands them to the client, so nothing is lost by connecting through one endpoint instead of another - only the slot differs (below). A protocol's own shape is never bent to carry them. The verdict of a `schema` answer (`json`, `jsonConforms`, `jsonError`) travels the same way and in the same slot. When `stream` is on, the core sends the index before the content (a `products` frame) and the protocol attaches it to its final frame. `ocr` is not part of this index: it produces no product beside the answer, it prints the recognized text into the markdown itself, so it needs no per-protocol slot.
 
 | Protocol | Where the index rides                                                                 |
 | -------- | ------------------------------------------------------------------------------------- |
@@ -1342,6 +1378,8 @@ Examples:
 Tokens are obtained from the `402 Payment Required` response after payment.
 Store tokens securely for subsequent requests. Do not log or echo raw tokens in responses.
 
+A memo payment issued for a live token adds to its balance instead of minting a second token: the whole amount received is credited, the token keeps its expiry, and a token whose balance can no longer pay for a request stays alive and is refilled the same way.
+
 ## Rate limiting
 
 The service enforces rate limits to ensure fair usage.
@@ -1350,21 +1388,21 @@ The service enforces rate limits to ensure fair usage.
 
 All responses include rate limit information in headers:
 
-| Header                | Description                                                                                         |
-| --------------------- | --------------------------------------------------------------------------------------------------- |
-| X-RateLimit-Remaining | Requests remaining in current window                                                                |
-| X-RateLimit-Reset     | Unix timestamp when the limit resets                                                                |
-| X-Free-Remaining      | Free conversions left today for this caller (10 to a caller, drawn from one shared daily allowance) |
-| X-Free-Reset          | Unix timestamp when the free allowance is restored (next UTC midnight)                              |
-| X-Content-Warning     | The answer carries a doubt worth naming                                                             |
-| Link                  | Machine-readable entry points on every response: the API catalog and the AI discovery manifest      |
+| Header                | Description                                                                                    |
+| --------------------- | ---------------------------------------------------------------------------------------------- |
+| X-RateLimit-Remaining | Requests remaining in current window                                                           |
+| X-RateLimit-Reset     | Unix timestamp when the limit resets                                                           |
+| X-Free-Remaining      | Free conversions left today for this caller (10 to a caller)                                   |
+| X-Free-Reset          | Unix timestamp when the free allowance is restored (the start of the next day)                 |
+| X-Content-Warning     | The answer carries a doubt worth naming                                                        |
+| Link                  | Machine-readable entry points on every response: the API catalog and the AI discovery manifest |
 
 ### Rate limits
 
-| Tier | Limit                                                                            |
-| ---- | -------------------------------------------------------------------------------- |
-| Free | 10 requests per day (no token required), within the service's overall free quota |
-| Paid | 10,000 requests per hour                                                         |
+| Tier | Hourly budget                        | Other limits                                                                                |
+| ---- | ------------------------------------ | ------------------------------------------------------------------------------------------- |
+| Free | 10,000 requests per hour, per caller | A daily allowance within a quota allocated for the whole service, plus a per-document limit |
+| Paid | The same budget, per caller          | No per-document limit: a balance meters the volume                                          |
 
 The hourly budget is counted per caller, and paid requests are counted in it too - it is not per token and not per agent. A token carries a prepaid balance, not extra rate: activating one buys volume, it does not widen the budget, and running more agents does not multiply it. The per-resource limit applies to the free tier only - a token removes it, because a balance already meters paid volume.
 
@@ -1372,10 +1410,10 @@ When rate limit is exceeded, the service returns HTTP 429.
 
 ### Free tier counters
 
-- `free_remaining` / `X-Free-Remaining` - How many free conversions are left to this caller today, counted after the one being answered. The free tier carries 10 conversions a day to a caller, drawn from one shared daily allowance for the whole service
-- `free_reset` / `X-Free-Reset` - Unix timestamp when the free allowance is restored: the next UTC midnight
+- `free_remaining` / `X-Free-Remaining` - How many free conversions are left to this caller today, counted after the one being answered. The free tier carries 10 conversions a day to a caller, within a quota allocated for the whole service, so the full allowance is not guaranteed
+- `free_reset` / `X-Free-Reset` - Unix timestamp when the free allowance is restored: the start of the next day (UTC)
 
-The counters travel as `X-Free-Remaining` and `X-Free-Reset` headers on every protocol, and beside them as `free_remaining` and `free_reset` where the answer has a JSON body (POST /, MCP, OpenAI) - so a client reading either one knows where it stands. They are absent on a request answered by a paid token, which is not drawn from the free allowance. The allowance is per caller but drawn from one shared daily pool, so a caller can find it already spent by others. A request the service refuses - an invalid parameter, an unsupported format, a document over the input gate - does not consume it.
+The counters travel as `X-Free-Remaining` and `X-Free-Reset` headers on every protocol, and beside them as `free_remaining` and `free_reset` where the answer has a JSON body (POST /, MCP, OpenAI) - so a client reading either one knows where it stands. They are absent on a request answered by a paid token, which is not drawn from the free allowance. A request the service refuses - an invalid parameter, an unsupported format, a document over the input gate - does not consume it. That allowance sits inside a quota allocated for the whole service, so a caller may find fewer conversions left than a full day's allowance.
 
 ### Content warnings
 
@@ -1600,7 +1638,7 @@ emits it in its own native frame format:
 - streaming
 - system instructions
 - structured extraction
-- `response_format: { "type": "json_object" }` - JSON mode where this endpoint writes the system prompt itself; a schema request is accepted but not enforced
+- `response_format: { "type": "json_object" }` - JSON mode where this endpoint writes the system prompt itself; `{ "type": "json_schema", "json_schema": { "schema": ... } }` is the OpenAI spelling of `schema` and is enforced the same way, with the JSON value as the message content
 
 Use it when the host agent is already built around OpenAI-compatible chat completions.
 
@@ -1622,7 +1660,7 @@ Use these endpoints when needed:
 - `POST /mcp`
 
 The `convert` tool parameters:
-- `input` (URL, text, or data URI - auto-detected), `prompt`, `result`, `part`, `find`, `capacity`, `ttl`, `attachments`, `ocr`, `stream`, `token`, `memo`, `password`
+- `input` (URL, text, or data URI - auto-detected), `prompt`, `result`, `schema`, `part`, `find`, `capacity`, `ttl`, `attachments`, `ocr`, `stream`, `token`, `memo`, `password`
 
 Supported methods (spec 2026-07-28, stateless):
 - `server/discover` - discover server capabilities and supported versions
@@ -1830,6 +1868,7 @@ Use mdapi.io at each stage when switching roles so each agent receives only the 
 - A conversion token that is unknown or expired answers `402` with a payment challenge, not `401`.
 
 ### 402 Payment Required
+- A paid stage asked for on the free tier is refused here, not skipped: the body carries `freeAlternative`, the route that answers the same input without it. Resend as it names and the conversion is free.
 - Follow the payment challenge.
 - Use manual payment headers or the autonomous payment flow.
 
@@ -1875,10 +1914,13 @@ Some facts about an answer are not in its body: what service replied, whether a 
 - `ETag` / `If-None-Match` - A validator on the published documents - the canonical path, no query string, `GET` or `HEAD`, status `200`. Send the tag back as `If-None-Match` and an unchanged document is answered `304` with no body. The tag is the digest of exactly the bytes served, so it never matches a different representation of the same address.
 - `Repr-Digest` / `Want-Repr-Digest` - The integrity field of the same published documents (RFC 9530), `sha-256=:<base64>:` over the same bytes the entity tag covers. It answers a different question than `ETag`: the tag asks whether a stored copy is still current, the digest whether the bytes are the ones the service sent - so a consumer that kept a body can verify it later, without a second request. Sent on every published document, whether the body was built now or reused, so the value is the same either way; `Want-Repr-Digest` is accepted and the field is sent regardless.
 - `Cache-Control` - The static discovery and manifest documents are reusable for public, max-age=3600, s-maxage=3600, so resolving a service to its documents need not reach the worker every time.
+- `Accept` / `X-MDAPI-Json-Conforms` / `X-MDAPI-Json-Error` - A conversion answers markdown on `GET` and JSON on `POST`, and the caller chooses the form of a `GET` answer with `Accept`: `application/json` answers the same body a `POST` answers, while a missing field, `*/*` or `text/markdown` keeps the markdown answer. The four protocol endpoints answer in the shape their protocol defines. The choice decides the form of the answer, not what was converted - the document is markdown either way, and the JSON form is the one that hands back the answer to a `schema` as a value. When the request named a `schema`, a GET reports the verdict of the answer in `X-MDAPI-Json-Conforms` and names the first violation in `X-MDAPI-Json-Error`, because a markdown body has nowhere to put it.
 - `Retry-After` - How long to wait before asking again, on a throttled answer and on an AI provider failure. It is the service's own estimate, so a caller that waits it out does not have to guess a backoff.
+- `X-MDAPI-Capacity-Window` - The window an answer was priced and cut for, in tokens - sent only on requests that buy an answer. `capacity` is a level; the level resolves to a number from the document and the instruction, so this is the number the price stands for. It is also what the answer may take: both sides of one window, input and output.
 
-### 503 AI Provider Unavailable
-- The model provider failed; the request is not charged and can be retried.
+### 503 Unavailable
+- The model provider failed (`ai_unavailable`); the request is not charged and can be retried.
+- Or the service's daily paid-work budget is spent (`daily_budget_exhausted`): model answers pause until the next day. Not charged either, and the document itself still converts without a prompt (`result=markdown`).
 
 ## Health Check
 
