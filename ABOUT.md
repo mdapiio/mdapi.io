@@ -155,7 +155,7 @@ mdapi.io turns complex input into compact, AI-ready output so humans and autonom
 - **OpenAPI specification (YAML):** https://mdapi.io/.well-known/openapi.yaml or https://mdapi.io/openapi.yaml
 - **MAPI specification:** https://mdapi.io/.well-known/mapi.md or https://mdapi.io/mapi.md
 - **Skill specification:** https://mdapi.io/.well-known/skill.md or https://mdapi.io/skill.md
-- **ARD manifest:** https://mdapi.io/.well-known/ard.json or https://mdapi.io/.well-known/ai-catalog.json
+- **ARD manifest:** https://mdapi.io/.well-known/ard.json or https://mdapi.io/.well-known/ai-catalog.json or https://mdapi.io/ard.json
 - **Agent Plugins manifest:** https://mdapi.io/.well-known/plugin/plugin.json or https://mdapi.io/.well-known/plugin.json
 - **Agent Plugins MCP config:** https://mdapi.io/.well-known/plugin/mcp.json
 - **Agent Plugins conversion skill:** https://mdapi.io/.well-known/plugin/skills/mdapi-conversion/SKILL.md
