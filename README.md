@@ -43,7 +43,7 @@ GET /.well-known/ai-discovery.json
 - **Notebooks** - Executable notebooks. The knowledge is the code AND the result it produced: a notebook shows how an answer was obtained, which a finished result does not. Formats: IPYNB, NB
 - **Spreadsheets** - Tabular data held in cells. The knowledge is the rows and the columns, and the statistics that follow from them. Useful for reading a table without opening a spreadsheet program. Formats: XLSX, XLS, XLC, XLM, XLT, XLSM, XLSB, XLA, XLTX, XLTM, XLAM, ODS, FODS, OTS, ET, ETT, PMD, GNUMERIC, Numbers, DTA, RDS, RDA, RData, NPY, NPZ, HYPER, SLK, SYLK, DIF, PRN, FWF, WK1, WK2, WK3, WK4, SXC, UOS
 - **Presentations** - Slide decks. The knowledge is the narrative: one idea per slide, plus the speaker notes that explain it. Formats: PPTX, PPT, PPA, POT, PPS, PWZ, POTX, POTM, PPSX, PPSM, PPTM, DPS, DPT, ODP, FODP, OTP, KEY, SXI, UOP
-- **Data and databases** - Data containers of every kind: records, columns, schemas, and the structures of scientific, geospatial and engineering data. Useful to see the shape of a dataset and a bounded sample of its content. Formats: DBF, FPT, DBT, ODB, MSI, BSON, BED, BEDGRAPH, BB, NARROWPEAK, BROADPEAK, GTF, GFF, GFF2, GFF3, FASTA, FA, FFN, FAA, FNA, FASTQ, FQ, NEWICK, NEXUS, CIF, MMCIF, PDB, ENT, XYZ, NII, FITS, MRC, MRCS, EDF, BDF, NRRD, TIFF, TIF, GeoTIFF, DCM, JCAMP-DX, JDX, DX, JCAMP, NetCDF, NC, CDF, MZML, MZXML, CBF, MAP, MTZ, SAV, ZSAV, XPT, MAT, DM3, DM4, PARQUET, PQ, AVRO, ORC, ARROW, FTR, FEATHER, ARROWS, SQLITE, DB, SQLITE3, MDB, ACCDB, DUCKDB, SAS7BDAT, TWB, TWBX, PBIX, HDF5, H5, HE5, HDF, MNC, NXS, SHP, GPX, GML, GML3, CITYGML, GPKG, LAS, LAZ, 3DS, GLB, PLY, STL, OBJ, OFF, USD, USDC, USDZ, AMF, 3MF, L5X, PMTILES, MBTILES
+- **Data and databases** - Data containers of every kind: records, columns, schemas, and the structures of scientific, geospatial and engineering data. Useful to see the shape of a dataset and a bounded sample of its content. Formats: DBF, FPT, DBT, ODB, MSI, BSON, BED, BEDGRAPH, BB, NARROWPEAK, BROADPEAK, GTF, GFF, GFF2, GFF3, FASTA, FA, FFN, FAA, FNA, FASTQ, FQ, NEWICK, NEXUS, CIF, MMCIF, PDB, ENT, XYZ, NII, FITS, MRC, MRCS, EDF, BDF, NRRD, TIFF, TIF, GeoTIFF, DCM, JCAMP-DX, JDX, DX, JCAMP, NetCDF, NC, CDF, MZML, MZXML, CBF, MAP, MTZ, SAV, ZSAV, XPT, MAT, DM3, DM4, PARQUET, PQ, AVRO, ORC, ARROW, FTR, FEATHER, ARROWS, LANCE, SQLITE, DB, SQLITE3, MDB, ACCDB, DUCKDB, SAS7BDAT, TWB, TWBX, PBIX, HDF5, H5, HE5, HDF, MNC, NXS, SHP, GPX, GML, GML3, CITYGML, GPKG, LAS, LAZ, 3DS, GLB, PLY, STL, OBJ, OFF, USD, USDC, USDZ, AMF, 3MF, L5X, PMTILES, MBTILES
 - **Graphs (RDF)** - Linked data: subjects, predicates and objects, in several syntaxes. The knowledge is the graph itself - the relationships, not the prose around them. Formats: RDF, OWL, TTL, TRIG, NT, NQ, N3, JSONLD
 - **Images** - Pictures. The knowledge is what the picture shows, so it is carried to the model as an image rather than as text. Formats: JPEG, JPG, PNG, WebP, GIF, BMP, SVG, SVGZ
 - **Fonts** - Typefaces. The knowledge is the design record the font carries about itself: the family and its styles, the foundry and the designer, the license it is released under, the scripts it covers and the glyphs it draws. Formats: TTF, OTF, TTC, WOFF, WOFF2
@@ -70,7 +70,7 @@ The full guide: https://mdapi.io/docs/formats
 
 ### Document conversion quality
 
-Quality measured over three corpora - PDF documents, those documents re-emitted in sixteen office, web, spreadsheet and Apple formats, office files and e-books, and a sample of iWork packages, archives, data and mail - each scored by its own evaluator: the scores of this service and of the other engines on the same files, which corpus measures each extension, who measured each, the method boundaries, and the capabilities no compared engine offers.
+Quality measured over three corpora - PDF documents, those documents re-emitted in fifteen office, web, spreadsheet and Apple formats, office files and e-books, and a sample of iWork packages, archives, data and mail - each scored by its own evaluator: the scores of this service and of the other engines on the same files, which corpus measures each extension, who measured each, the method boundaries, and the capabilities no compared engine offers.
 
 The full guide: https://mdapi.io/docs/benchmarks
 
@@ -222,16 +222,16 @@ The full guide: https://mdapi.io/docs/tiers
 
 Before you can use a paid token, you must receive a 402 response first:
 
-| Step | Description                                              |
-| ---- | -------------------------------------------------------- |
-| 1    | Request without token → Receive 402 with NEW token+memo  |
-| 2    | Send USDC on Solana or Base to wallet with memo from 402 |
-| 3    | Retry with EXACT token+memo from 402 → Activation        |
-| 4    | After: use token only (no memo needed)                   |
+| Step | Description                                                                                                                                                                                               |
+| ---- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 1    | Request without token → Receive 402 with NEW token+memo                                                                                                                                                   |
+| 2    | Send USDC on Solana, Base, Arbitrum One, Ethereum, Polygon PoS, OP Mainnet, Avalanche C-Chain, zkSync Era, Linea, Celo, Sonic, Unichain, World Chain, Ink, Monad or HyperEVM to wallet with memo from 402 |
+| 3    | Retry with EXACT token+memo from 402 → Activation                                                                                                                                                         |
+| 4    | After: use token only (no memo needed)                                                                                                                                                                    |
 
 Important: The token+memo issued in the 402 response MUST be used exactly. Using old token or different memo will be rejected.
 
-A payment is matched to an invoice by the reference the `402` answer carries (the memo), so a payment that carries no reference activates nothing. A manual payment attaches it the way the network allows: Solana - an SPL memo instruction; Base - the same text as raw UTF-8 bytes after the 68 bytes of transfer(address,uint256) calldata - a plain wallet send carries no data, so the transfer has to be built with the memo attached. An automatic x402 payment (v1 or v2) reads the same reference from the answer instead of the prose: every `accepts[]` entry states it in `extra.memo` and names its carrier in `extra.memoMethod`, plus `extra.memoOffsetBytes` on a rail where the reference is not a transaction field but bytes appended after the transfer calldata. The reference is one string for every rail, so a client that pays on one rail never has to ask which rail the invoice belongs to.
+A payment is matched to an invoice by the reference the `402` answer carries (the memo), so a payment that carries no reference activates nothing. A manual payment attaches it the way the network allows: Solana - an SPL memo instruction; Base - the same text as raw UTF-8 bytes after the 68 bytes of transfer(address,uint256) calldata - a plain wallet send carries no data, so the transfer has to be built with the memo attached; Arbitrum One - the same text as raw UTF-8 bytes after the 68 bytes of transfer(address,uint256) calldata - a plain wallet send carries no data, so the transfer has to be built with the memo attached; Ethereum - the same text as raw UTF-8 bytes after the 68 bytes of transfer(address,uint256) calldata - a plain wallet send carries no data, so the transfer has to be built with the memo attached; Polygon PoS - the same text as raw UTF-8 bytes after the 68 bytes of transfer(address,uint256) calldata - a plain wallet send carries no data, so the transfer has to be built with the memo attached; OP Mainnet - the same text as raw UTF-8 bytes after the 68 bytes of transfer(address,uint256) calldata - a plain wallet send carries no data, so the transfer has to be built with the memo attached; Avalanche C-Chain - the same text as raw UTF-8 bytes after the 68 bytes of transfer(address,uint256) calldata - a plain wallet send carries no data, so the transfer has to be built with the memo attached; zkSync Era - the same text as raw UTF-8 bytes after the 68 bytes of transfer(address,uint256) calldata - a plain wallet send carries no data, so the transfer has to be built with the memo attached; Linea - the same text as raw UTF-8 bytes after the 68 bytes of transfer(address,uint256) calldata - a plain wallet send carries no data, so the transfer has to be built with the memo attached; Celo - the same text as raw UTF-8 bytes after the 68 bytes of transfer(address,uint256) calldata - a plain wallet send carries no data, so the transfer has to be built with the memo attached; Sei - the same text as raw UTF-8 bytes after the 68 bytes of transfer(address,uint256) calldata - a plain wallet send carries no data, so the transfer has to be built with the memo attached; Sonic - the same text as raw UTF-8 bytes after the 68 bytes of transfer(address,uint256) calldata - a plain wallet send carries no data, so the transfer has to be built with the memo attached; Unichain - the same text as raw UTF-8 bytes after the 68 bytes of transfer(address,uint256) calldata - a plain wallet send carries no data, so the transfer has to be built with the memo attached; World Chain - the same text as raw UTF-8 bytes after the 68 bytes of transfer(address,uint256) calldata - a plain wallet send carries no data, so the transfer has to be built with the memo attached; Ink - the same text as raw UTF-8 bytes after the 68 bytes of transfer(address,uint256) calldata - a plain wallet send carries no data, so the transfer has to be built with the memo attached; Monad - the same text as raw UTF-8 bytes after the 68 bytes of transfer(address,uint256) calldata - a plain wallet send carries no data, so the transfer has to be built with the memo attached; HyperEVM - the same text as raw UTF-8 bytes after the 68 bytes of transfer(address,uint256) calldata - a plain wallet send carries no data, so the transfer has to be built with the memo attached. An automatic x402 payment (v1 or v2) reads the same reference from the answer instead of the prose: every `accepts[]` entry states it in `extra.memo` and names its carrier in `extra.memoMethod`, plus `extra.memoOffsetBytes` on a rail where the reference is not a transaction field but bytes appended after the transfer calldata. The reference is one string for every rail, so a client that pays on one rail never has to ask which rail the invoice belongs to.
 
 ### Refilling a token
 
@@ -356,44 +356,44 @@ The X-MDAPI-Token-Status header (and token_status field in responses) indicates 
 
 ### Endpoints
 
-| Method | Path                                                        | Description                        |
-| ------ | ----------------------------------------------------------- | ---------------------------------- |
-| GET    | /about                                                      | About service                      |
-| GET    | /privacy                                                    | Privacy                            |
-| GET    | /contact                                                    | Contact                            |
-| GET    | /AGENTS.md or /agents.md or /agent.md                       | Agent entry point                  |
-| GET    | /auth.md                                                    | Agent access                       |
-| GET    | /                                                           | API documentation and conversion   |
-| POST   | /                                                           | Convert content (JSON body)        |
-| POST   | /v1/chat/completions                                        | OpenAI-compatible chat completions |
-| POST   | /v1/responses                                               | OpenAI-compatible Responses API    |
-| GET    | /v1/models                                                  | OpenAI-compatible model list       |
-| GET    | /mcp                                                        | MCP server manifest                |
-| POST   | /mcp                                                        | MCP RPC endpoint                   |
-| POST   | /acp                                                        | ACP RPC endpoint (IDE agents)      |
-| POST   | /a2a                                                        | A2A RPC endpoint (agent2agent)     |
-| GET    | /health                                                     | Health check                       |
-| GET    | /llms.txt                                                   | Documentation index                |
-| GET    | /llms-full.txt                                              | Full API documentation             |
-| GET    | /.well-known/ai-discovery.json or /ai-discovery.json        | AI discovery                       |
-| GET    | /.well-known/agent.json or /agent.json                      | AI Agent discovery                 |
-| GET    | /.well-known/agent-card.json or /agent-card.json            | A2A Agent card                     |
-| GET    | /.well-known/acp.json or /acp.json                          | ACP manifest                       |
-| GET    | /.well-known/x402.json or /x402.json or /.well-known/x402   | x402 payment manifest              |
-| GET    | /.well-known/openapi.json or /openapi.json                  | OpenAPI specification (JSON)       |
-| GET    | /.well-known/openapi.yaml or /openapi.yaml                  | OpenAPI specification (YAML)       |
-| GET    | /.well-known/mapi.md or /mapi.md                            | MAPI specification                 |
-| GET    | /.well-known/skill.md or /skill.md                          | Skill specification                |
-| GET    | /.well-known/skills/index.json                              | Legacy skills index                |
-| GET    | /.well-known/agent-skills/index.json                        | Agent Skills discovery index       |
-| GET    | /.well-known/api-catalog                                    | API catalog                        |
-| GET    | /.well-known/ard.json or /.well-known/ai-catalog.json       | ARD manifest                       |
-| GET    | /.well-known/mcp/server-cards.json                          | MCP server cards index             |
-| GET    | /.well-known/plugin/plugin.json or /.well-known/plugin.json | Agent Plugins manifest             |
-| GET    | /.well-known/plugin/mcp.json                                | Agent Plugins MCP config           |
-| GET    | /.well-known/plugin/skills/mdapi-conversion/SKILL.md        | Agent Plugins conversion skill     |
-| GET    | /docs                                                       | API documentation pages            |
-| GET    | /docs/examples                                              | Example pages                      |
+| Method | Path                                                               | Description                        |
+| ------ | ------------------------------------------------------------------ | ---------------------------------- |
+| GET    | /about                                                             | About service                      |
+| GET    | /privacy                                                           | Privacy                            |
+| GET    | /contact                                                           | Contact                            |
+| GET    | /AGENTS.md or /agents.md or /agent.md                              | Agent entry point                  |
+| GET    | /auth.md                                                           | Agent access                       |
+| GET    | /                                                                  | API documentation and conversion   |
+| POST   | /                                                                  | Convert content (JSON body)        |
+| POST   | /v1/chat/completions                                               | OpenAI-compatible chat completions |
+| POST   | /v1/responses                                                      | OpenAI-compatible Responses API    |
+| GET    | /v1/models                                                         | OpenAI-compatible model list       |
+| GET    | /mcp                                                               | MCP server manifest                |
+| POST   | /mcp                                                               | MCP RPC endpoint                   |
+| POST   | /acp                                                               | ACP RPC endpoint (IDE agents)      |
+| POST   | /a2a                                                               | A2A RPC endpoint (agent2agent)     |
+| GET    | /health                                                            | Health check                       |
+| GET    | /llms.txt                                                          | Documentation index                |
+| GET    | /llms-full.txt                                                     | Full API documentation             |
+| GET    | /.well-known/ai-discovery.json or /ai-discovery.json               | AI discovery                       |
+| GET    | /.well-known/agent.json or /agent.json                             | AI Agent discovery                 |
+| GET    | /.well-known/agent-card.json or /agent-card.json                   | A2A Agent card                     |
+| GET    | /.well-known/acp.json or /acp.json                                 | ACP manifest                       |
+| GET    | /.well-known/x402.json or /x402.json or /.well-known/x402          | x402 payment manifest              |
+| GET    | /.well-known/openapi.json or /openapi.json                         | OpenAPI specification (JSON)       |
+| GET    | /.well-known/openapi.yaml or /openapi.yaml                         | OpenAPI specification (YAML)       |
+| GET    | /.well-known/mapi.md or /mapi.md                                   | MAPI specification                 |
+| GET    | /.well-known/skill.md or /skill.md                                 | Skill specification                |
+| GET    | /.well-known/skills/index.json                                     | Legacy skills index                |
+| GET    | /.well-known/agent-skills/index.json                               | Agent Skills discovery index       |
+| GET    | /.well-known/api-catalog                                           | API catalog                        |
+| GET    | /.well-known/ard.json or /.well-known/ai-catalog.json or /ard.json | ARD manifest                       |
+| GET    | /.well-known/mcp/server-cards.json                                 | MCP server cards index             |
+| GET    | /.well-known/plugin/plugin.json or /.well-known/plugin.json        | Agent Plugins manifest             |
+| GET    | /.well-known/plugin/mcp.json                                       | Agent Plugins MCP config           |
+| GET    | /.well-known/plugin/skills/mdapi-conversion/SKILL.md               | Agent Plugins conversion skill     |
+| GET    | /docs                                                              | API documentation pages            |
+| GET    | /docs/examples                                                     | Example pages                      |
 
 #### Examples
 
@@ -975,7 +975,7 @@ See https://mdapi.io/about for the full scenario walkthrough.
 - **OpenAPI specification (YAML):** https://mdapi.io/.well-known/openapi.yaml or https://mdapi.io/openapi.yaml
 - **MAPI specification:** https://mdapi.io/.well-known/mapi.md or https://mdapi.io/mapi.md
 - **Skill specification:** https://mdapi.io/.well-known/skill.md or https://mdapi.io/skill.md
-- **ARD manifest:** https://mdapi.io/.well-known/ard.json or https://mdapi.io/.well-known/ai-catalog.json
+- **ARD manifest:** https://mdapi.io/.well-known/ard.json or https://mdapi.io/.well-known/ai-catalog.json or https://mdapi.io/ard.json
 - **Agent Plugins manifest:** https://mdapi.io/.well-known/plugin/plugin.json or https://mdapi.io/.well-known/plugin.json
 - **Agent Plugins MCP config:** https://mdapi.io/.well-known/plugin/mcp.json
 - **Agent Plugins conversion skill:** https://mdapi.io/.well-known/plugin/skills/mdapi-conversion/SKILL.md
